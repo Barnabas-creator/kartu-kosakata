@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kartu Kosakata · 印尼语单词卡</title>
+<meta name="theme-color" content="#2f5d4f">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjI4IiBmaWxsPSIjMmY1ZDRmIi8+PHRleHQgeD0iOTYiIHk9IjEzMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsICdUaW1lcyBOZXcgUm9tYW4nLCBzZXJpZiIgZm9udC1zaXplPSIxMjQiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPks8L3RleHQ+PC9zdmc+Cg==">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #16211d;
+    --paper: #f2efe6;
+    --paper-2: #e6e1d3;
+    --moss: #2f5d4f;
+    --clove: #b4552d;
+    --gold: #c9a227;
+    --mute: #7b7768;
+  }
+
+  .app {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 20px;
+    min-height: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 30px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .masthead h1 span { color: var(--clove); }
+  .masthead .sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { background: var(--paper-2); }
+  .chip.on { background: var(--moss); border-color: var(--moss); color: #fff; }
+  .chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  .meter {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--mute); margin-bottom: 14px;
+  }
+  .bar { flex: 1; height: 4px; background: var(--paper-2); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--clove); transition: width .3s; }
+
+  /* card */
+  .stage { perspective: 1400px; margin-bottom: 16px; }
+  .card {
+    position: relative;
+    width: 100%;
+    min-height: 340px;
+    transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.2,.8,.25,1);
+    cursor: pointer;
+  }
+  .card.flip { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: #fffdf7;
+    border: 1.5px solid var(--ink);
+    border-radius: 4px;
+    box-shadow: 5px 5px 0 var(--ink);
+    padding: 26px 24px;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  .face.back { transform: rotateY(180deg); }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--moss); margin-bottom: auto;
+  }
+  .word {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: clamp(38px, 9vw, 58px); line-height: 1.05;
+    letter-spacing: -0.02em; text-align: center; margin: 14px 0 8px;
+  }
+  .pron {
+    text-align: center; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--clove); margin-bottom: auto;
+  }
+  .hint {
+    text-align: center; font-size: 11px; color: var(--mute);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: .08em;
+  }
+
+  .back .zh {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 27px;
+    margin-bottom: 14px; line-height: 1.3;
+  }
+  .row { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--paper-2); font-size: 14px; line-height: 1.55; }
+  .row b {
+    flex: 0 0 52px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--moss); font-weight: 500; padding-top: 3px;
+  }
+  .row i { font-style: normal; }
+  .ex { margin-top: 12px; padding: 12px; background: var(--paper); border-left: 3px solid var(--gold); font-size: 14px; line-height: 1.6; }
+  .ex em { font-style: italic; color: var(--moss); display: block; margin-bottom: 3px; }
+
+  .nav { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 13px 10px; border: 1.5px solid var(--ink);
+    border-radius: 4px; background: #fffdf7; color: var(--ink);
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px;
+    cursor: pointer; transition: all .12s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 3px 0 var(--ink); }
+  .btn:active { transform: none; box-shadow: none; }
+  .btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .btn.know { background: var(--moss); border-color: var(--moss); color: #fff; }
+  .btn.again { background: var(--clove); border-color: var(--clove); color: #fff; }
+  .btn.ghost { flex: 0 0 auto; padding: 13px 16px; }
+
+  .foot {
+    margin-top: 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: .08em; color: var(--mute); text-align: center;
+  }
+
+  .reset-btn {
+    display: block; margin: 10px auto 0; padding: 6px 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: .08em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--mute); color: var(--mute);
+    border-radius: 999px; cursor: pointer; transition: all .15s;
+  }
+  .reset-btn:hover { border-color: var(--clove); color: var(--clove); }
+  .reset-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+    .btn:hover { transform: none; }
+  }
+</style>
+
+<div class="app">
+  <div class="masthead">
+    <h1>Kartu <span>Kosakata</span></h1>
+    <div class="sub" id="deckname">词库 · 本对话</div>
+  </div>
+
+  <div class="controls" id="cats"></div>
+
+  <div class="meter">
+    <span id="pos">1 / 1</span>
+    <div class="bar"><i id="fill" style="width:0%"></i></div>
+    <span id="score">已掌握 0</span>
+  </div>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="face front">
+        <div class="tag" id="tagF">—</div>
+        <div class="word" id="w">—</div>
+        <div class="pron" id="p">—</div>
+        <div class="hint">点击卡片翻面 · 空格键</div>
+      </div>
+      <div class="face back">
+        <div class="tag" id="tagB">—</div>
+        <div class="zh" id="zh">—</div>
+        <div id="detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="btn ghost" id="prev" aria-label="上一个">←</button>
+    <button class="btn again" id="again">再练一次</button>
+    <button class="btn know" id="know">记住了</button>
+    <button class="btn ghost" id="shuffle" aria-label="打乱顺序">⇄</button>
+  </div>
+
+  <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
+  <button class="reset-btn" id="reset">清空进度</button>
+</div>
+
+<script>
+const DATA = [
+ {w:"musik",p:"mu-sik 木-西克",zh:"音乐",c:"教会",root:"外来词（荷 muziek）",coll:"mendengarkan musik 听音乐 / alat musik 乐器 / musik rohani 灵修音乐",syn:"lagu = 一首首的歌曲；musik = 音乐整体",ex:"Saya suka mendengarkan musik rohani.|我喜欢听灵修音乐。"},
+ {w:"lalu",p:"la-lu 拉-鲁",zh:"上一个 / 然后",c:"语法",root:"lalu（经过、过去）",coll:"minggu lalu 上周 / dua hari yang lalu 两天前 / A, lalu B 然后",syn:"跟时间词后=「上/前」；连接两动作=「然后」。近义 kemudian（书面）、terus（口语）",ex:"Minggu lalu saya sakit, lalu minggu ini sudah sembuh.|上周我生病了，然后这周已经痊愈了。"},
+ {w:"kali terakhir",p:"ka-li te-ra-khir",zh:"上一次",c:"高频",root:"kali 次 + terakhir 最后",coll:"kali ini 这次 / sebelumnya 之前 / setiap kali 每次",syn:"⚠️ 没有「kali lalu」这种说法。lalu 只跟时间段（hari/minggu/bulan/tahun）",ex:"Kali terakhir kita bertemu di gereja.|上一次我们是在教会见面的。"},
+ {w:"diam",p:"di-am 迪-阿姆",zh:"安静；不动；居住",c:"高频",root:"diam",coll:"Tolong diam sebentar 请安静一下 / berdiam diri 保持沉默",syn:"tenang 平静镇定（更温和）；sunyi 环境寂静；tinggal 居住（正式）",ex:"Roh Kudus berdiam di dalam kita.|圣灵住在我们里面。"},
+ {w:"demi",p:"de-mi 德-米（e 清晰）",zh:"为了；以…之名",c:"正式",root:"demi",coll:"demi Tuhan 为了主 / satu demi satu 一个一个 / hari demi hari 日复一日",syn:"untuk 中性最常用；supaya/agar 后接句子；demi 后接名词，带牺牲感",ex:"Yesus mati demi kita.|耶稣为我们而死。"},
+ {w:"mengatakan",p:"meng-a-ta-kan 孟-阿-达-干",zh:"说出、讲述（某内容）",c:"词缀",root:"kata + meng-…-kan（k 脱落）",coll:"mengatakan bahwa… 说…",syn:"berkata 后接引语；berbicara 交谈；bilang 口语；mengucapkan 固定表达",ex:"Alkitab mengatakan bahwa Tuhan itu kasih.|圣经说神就是爱。"},
+ {w:"mengusir",p:"meng-u-sir 孟-乌-西尔",zh:"驱赶、驱逐",c:"教会",root:"usir + meng-（元音开头不脱落）",coll:"mengusir setan 赶鬼 / mengusir roh jahat 赶逐恶灵",syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {w:"lereng",p:"le-reng 勒-仍",zh:"山坡、斜坡",c:"地形",root:"lereng",coll:"lereng gunung 山坡 / di lereng bukit 在山坡上",syn:"⚠️ 别和 loreng（迷彩、条纹）混淆",ex:"Sejumlah orang berkumpul di lereng bukit.|一些人聚集在山坡上。"},
+ {w:"bukit",p:"bu-kit 布-吉特",zh:"小山、丘陵",c:"地形",root:"bukit",coll:"Khotbah di Bukit 登山宝训",syn:"gunung 大山；pegunungan 山脉；bukit 矮小山丘",ex:"Yesus naik ke bukit untuk berdoa.|耶稣上山去祷告。"},
+ {w:"sejumlah",p:"se-jum-lah 色-祝姆-拉",zh:"若干、一些；总共",c:"高频",root:"se- + jumlah（总数）",coll:"sejumlah orang 一些人 / sejumlah uang 一笔钱",syn:"beberapa 几个（口语）；banyak 很多；sejumlah 偏书面",ex:"Sejumlah orang datang ke gereja.|一些人来到教会。"},
+ {w:"suruhlah",p:"su-ruh-lah",zh:"吩咐吧（柔和祈使）",c:"语法",root:"suruh + -lah",coll:"Marilah kita berdoa 让我们祷告 / Datanglah kepada-Ku 到我这里来",syn:"menyuruh 吩咐；memerintahkan 命令（正式）；mengutus 差遣",ex:"Suruhlah anak itu masuk.|叫那孩子进来吧。"},
+ {w:"mengabulkan",p:"meng-a-bul-kan",zh:"应允、准许",c:"教会",root:"kabul + meng-…-kan（k 脱落）",coll:"mengabulkan doa 应允祷告 / dikabulkan 被应允 / terkabul 实现了",syn:"menjawab 回答；menyetujui 同意（人与人）",ex:"Tuhan mengabulkan doa kita.|神应允我们的祷告。"},
+ {w:"terjun",p:"ter-jun 德尔-准",zh:"跳下、投身",c:"动作",root:"terjun（ter- 非词缀）",coll:"air terjun 瀑布 / terjun payung 跳伞 / terjun ke pelayanan 投身服事",syn:"lompat 向上/向前跳；terjun 向下跳",ex:"Babi-babi itu terjun ke dalam danau.|那群猪冲下山崖投进湖里。"},
+ {w:"tepi",p:"te-pi 德-比",zh:"边、边缘、岸",c:"地形",root:"tepi",coll:"tepi jalan 路边 / tepi jurang 悬崖边 / di tepi danau 在湖边",syn:"pinggir 口语；sisi 侧面；ujung 末端",ex:"Kami duduk di tepi danau.|我们坐在湖边。"},
+ {w:"jurang",p:"ju-rang 朱-让",zh:"深谷、悬崖、鸿沟",c:"地形",root:"jurang",coll:"jurang pemisah 隔断的鸿沟 / jurang antara kaya dan miskin 贫富差距",syn:"lembah 山谷（宽阔）；tebing 峭壁",ex:"Dia hampir jatuh ke dalam jurang.|他差点掉进深谷。"},
+ {w:"lemas",p:"le-mas 勒-马斯",zh:"瘫软无力、虚脱",c:"身体",root:"lemas",coll:"badan lemas 身体没力气 / mati lemas 窒息",syn:"⚠️ lemah = 软弱（也指信心）；letih/capek 疲倦；lembut 温柔",ex:"Setelah berpuasa, dia merasa lemas.|禁食后，他感到虚脱。"},
+ {w:"menceritakan",p:"men-ce-ri-ta-kan 门-遮-里-达-干",zh:"讲述、叙述",c:"词缀",root:"cerita + men-…-kan（c 不脱落）",coll:"menceritakan kesaksian 分享见证 / menceritakan perumpamaan 讲比喻",syn:"⚠️ menceriterakan 是旧拼法。mengatakan 说内容；berbagi 分享",ex:"Dia menceritakan kesaksiannya di gereja.|他在教会分享他的见证。"},
+ {w:"mendesak",p:"men-de-sak 门-德-萨克",zh:"催逼；拥挤；紧急的",c:"高频",root:"desak + men-（d 不脱落）",coll:"kebutuhan yang mendesak 迫切的需要 / terdesak 走投无路",syn:"mendorong 推动鼓励；memaksa 强迫；penting 重要（≠紧急）",ex:"Ini adalah kebutuhan yang mendesak.|这是一个迫切的需要。"},
+ {w:"menghitung",p:"meng-hi-tung",zh:"计算、数",c:"高频",root:"hitung + meng-（h 不脱落）",coll:"perhitungan 计算 / berhitung 算数 / hitungan 计数",syn:"mendata 登记统计；memperkirakan 估算；statistik 统计数据",ex:"Tuhan menghitung setiap air mata kita.|神数算我们每一滴眼泪。"},
+ {w:"bumi",p:"bu-mi 布-米",zh:"地、大地、地球",c:"教会",root:"bumi（源自梵语 bhūmi）",coll:"langit dan bumi 天地 / ujung bumi 地极 / gempa bumi 地震",syn:"⚠️ dunia = 世界、世人（约3:16 用 dunia）；tanah 土地；darat 陆地",ex:"Pada mulanya Allah menciptakan langit dan bumi.|起初神创造天地。"},
+ {w:"marah",p:"ma-rah 马-拉",zh:"生气、发怒",c:"高频",root:"marah",coll:"memarahi 责骂 / kemarahan 愤怒",syn:"⚠️ marun 栗色（低频）；merah 红色；maruk 贪心",ex:"Jangan cepat marah.|不要轻易发怒。"},
+ {w:"pabrik",p:"pa-brik 巴-布里克",zh:"工厂",c:"工作",root:"pabrik（荷 fabriek）",coll:"pabrik sepatu 鞋厂 / buruh pabrik 工厂工人 / bekerja di pabrik",syn:"perusahaan 公司；bengkel 修理厂；industri 工业（行业概念）",ex:"Dia bekerja di pabrik sepatu.|他在鞋厂工作。"},
+ {w:"pemasok",p:"pe-ma-sok 普-马-索克",zh:"供应商",c:"工作",root:"pasok + pe-（p 脱落）",coll:"memasok 供应 / pasokan 供应量 / 口语常说 supplier",syn:"penjual 卖家；distributor 分销商；penyedia 提供者",ex:"Kami mencari pemasok baru.|我们在找新的供应商。"},
+ {w:"berat",p:"be-rat 布-拉特",zh:"重的、沉重的",c:"辨音",root:"berat",coll:"beban berat 重担 / berat hati 沉重的心",syn:"⚠️ 辨音三兄弟：berat 重 / barat 西方 / baret 贝雷帽·刮痕",ex:"Bebanmu berat? Datanglah kepada-Ku.|你的担子重吗？到我这里来。"},
+ {w:"dosa",p:"do-sa 多-萨",zh:"罪、罪过",c:"教会",root:"dosa",coll:"berdosa 有罪的 / pengampunan dosa 罪得赦免 / mengampuni 赦免",syn:"kesalahan 过错（日常）；kejahatan 恶行；pelanggaran 过犯",ex:"Semua orang telah berbuat dosa.|世人都犯了罪。"},
+ {w:"kosakata",p:"ko-sa-ka-ta",zh:"词汇（总称）",c:"学习",root:"kosa + kata",coll:"menambah kosakata 增加词汇量 / kata dasar 词根 / imbuhan 词缀",syn:"kata 单词；istilah 术语；kalimat 句子",ex:"Apa kata dasarnya?|它的词根是什么？"},
+ {w:"metode",p:"me-to-de 梅-多-德",zh:"方法、方式",c:"高频",root:"metode（荷 methode）",coll:"metodologi 方法论 / Gereja Metodis 卫理公会",syn:"cara 最口语最高频；sistem 体系；teknik 技巧；secara 以…方式",ex:"Bagaimana cara berdoa yang benar?|正确祷告的方式是什么？"},
+ {w:"sejak",p:"se-jak 色-札克",zh:"自从、从…以来",c:"高频",root:"sejak",coll:"sejak kecil 从小 / sejak semula 起初 / sejak saat itu 从那时起",syn:"⚠️ sejak 看向过去；mulai 看向未来；dari 可指地点；selama 持续期间",ex:"Sejak saya percaya kepada Yesus, hidup saya berubah.|自从我信耶稣，我的生命改变了。"},
+ {w:"begini",p:"be-gi-ni 布-吉-尼",zh:"这样、像这样",c:"口语",root:"be- + ini",coll:"Caranya begini 方法是这样的 / 口语缩读 gini",syn:"⚠️ begitu = 那样。「Oh, begitu!」哦，原来如此！kalau begitu 那么",ex:"Begini, saya mau bertanya sesuatu.|是这样的，我想问点事。"},
+ {w:"bareng",p:"ba-reng 巴-仍",zh:"一起（口语）",c:"口语",root:"bareng（爪哇语借入）",coll:"makan siang bareng 一起吃午饭 / barengan 一块儿",syn:"正式说法 bersama。教会用 bersama：Mari kita berdoa bersama.",ex:"Makan siang bareng yuk!|一起吃午饭吧！"},
+ {w:"yuk",p:"yuk / yuks",zh:"走吧、来吧（口语邀请）",c:"口语",root:"ayo 的口语缩短",coll:"梯度：mari（正式）> ayo（中性）> yuk（随意）> yuks（俏皮）",syn:"教会/书面用 mari：Mari kita berdoa.",ex:"Ayo makan siang bersama!|一起吃午饭吧！"},
+ {w:"urutan",p:"u-ru-tan 乌-鲁-丹",zh:"顺序、次序",c:"高频",root:"urut + -an",coll:"urutan ibadah 崇拜程序 / berurutan 按顺序 / mengurutkan 排序",syn:"susunan 结构；jadwal 时间表；acara 活动内容；peringkat 排名",ex:"Ceritakan secara berurutan.|请按顺序讲述。"},
+ {w:"revisi",p:"re-vi-si 雷-维-西",zh:"修订、修改",c:"工作",root:"revisi（荷 revisie）",coll:"direvisi 被修订 / merevisi 修订",syn:"mengoreksi 改错；memperbaiki 修好；mengubah 改变（属灵用这个）",ex:"Dokumen ini perlu direvisi.|这份文件需要修订。"},
+ {w:"berharap",p:"ber-ha-rap",zh:"盼望、希望",c:"词缀",root:"harap + ber-（不及物）",coll:"berharap kepada Tuhan 仰望神 / harapan 盼望 / pengharapan 盼望（属灵）",syn:"⚠️ mengharapkan 要接宾语：mengharapkan kehadiran Anda 期待您出席",ex:"Saya berharap kamu cepat sembuh.|我希望你早日康复。"},
+ {w:"mendoakan",p:"men-do-a-kan",zh:"为…祷告",c:"教会",root:"doa + men-…-kan（及物）",coll:"berdoa 祷告（不及物）/ mendoakan kamu 为你祷告",syn:"口诀：ber- 自己做，me-…-kan 对着谁做",ex:"Saya akan mendoakan kamu setiap hari.|我会每天为你祷告。"},
+ {w:"melompat",p:"me-lom-pat",zh:"跳、跳跃",c:"词缀",root:"lompat + me-（不及物的 me- 动词）",coll:"melompati 跳过某物 / lompat tali 跳绳 / melompat-lompat 蹦跳",syn:"⚠️ me- 标记主动语态，不等于及物。要接宾语加 -kan/-i",ex:"Orang lumpuh itu melompat dan memuji Allah.|那瘸腿的人跳起来赞美神。"},
+ {w:"menyanyikan",p:"me-nya-nyi-kan",zh:"唱（某首歌）",c:"教会",root:"nyanyi + meny-…-kan（s/ny 类）",coll:"menyanyi 唱歌（不及物）/ menyanyikan lagu pujian 唱赞美诗",syn:"对比：Kita menyanyi bersama vs. Kita menyanyikan lagu ini",ex:"Mari kita menyanyikan lagu nomor 10.|让我们唱第 10 首。"},
+ {w:"Bapa",p:"ba-pa 巴-巴（无 k）",zh:"父（属灵）",c:"教会",root:"bapa",coll:"Bapa di sorga 天父 / Allah Bapa 父神 / Bapa kami yang di sorga",syn:"⚠️ bapak = 日常父亲，也是敬语「先生」；ayah = 标准父亲；Pak Pendeta 牧师",ex:"Bapa kami yang di sorga, dikuduskanlah nama-Mu.|我们在天上的父，愿人都尊祢的名为圣。"},
+ {w:"tebu",p:"te-bu 德-布",zh:"甘蔗",c:"生活",root:"tebu",coll:"air tebu 甘蔗汁 / kebun tebu 甘蔗园 / gula tebu 蔗糖",syn:"⚠️ 易混：tebal 厚 / tebus 赎 / debu 灰尘 / tabu 禁忌",ex:"Saya suka minum air tebu.|我喜欢喝甘蔗汁。"},
+ {w:"menebus",p:"me-ne-bus",zh:"救赎、赎回",c:"教会",root:"tebus + men-（t 脱落）",coll:"Penebus 救赎主 / penebusan 救赎 / ditebus 被赎回",syn:"⚠️ 只差一字母的 tebu = 甘蔗",ex:"Yesus datang untuk menebus kita.|耶稣来救赎我们。"},
+ {w:"harus",p:"ha-rus 哈-鲁斯",zh:"必须、应该",c:"语法",root:"harus",coll:"梯度：wajib > harus > perlu > sebaiknya > boleh",syn:"⚠️ seharusnya = 本应该（含遗憾）；sebaiknya = 最好（建议）；「不应该」用 tidak boleh / jangan",ex:"Kita harus mengasihi sesama.|我们应当爱人如己。"},
+ {w:"sebaiknya",p:"se-ba-ik-nya",zh:"最好、建议",c:"语法",root:"se- + baik + -nya",coll:"Sebaiknya kamu istirahat dulu 你最好先休息",syn:"比 harus 客气得多，提建议专用",ex:"Sebaiknya kita berdoa dulu sebelum makan.|我们最好先祷告再吃饭。"},
+ {w:"hanya",p:"ha-nya 哈-娘",zh:"只、仅仅",c:"口语",root:"hanya",coll:"hanya … saja 仅仅 / 口语说 cuma / cuman（非标准）",syn:"口语↔正式：cuman↔hanya, bareng↔bersama, gini↔begini, aja↔saja, nggak↔tidak, udah↔sudah, banget↔sekali",ex:"Hanya oleh anugerah kita diselamatkan.|我们得救只在乎恩典。"},
+ {w:"kendala",p:"ken-da-la 肯-达-拉",zh:"障碍、阻碍",c:"工作",root:"kendala",coll:"menghadapi kendala 面临困难 / terkendala 受阻",syn:"masalah 最通用；hambatan 阻碍；kesulitan 困难；tantangan 挑战",ex:"Kami menghadapi banyak kendala dalam pelayanan.|我们在服事中面临许多困难。"},
+ {w:"kehendak",p:"ke-hen-dak",zh:"旨意、意愿",c:"教会",root:"hendak + ke-…-（-ak）",coll:"kehendak Tuhan 神的旨意 / berkehendak 有意愿",syn:"hendak = 想要（书面/圣经语体）；mau 口语；ingin 中性；akan 将要（≠意愿）",ex:"Jadilah kehendak-Mu.|愿祢的旨意成就。"},
+ {w:"peringatan",p:"pe-ri-nga-tan",zh:"纪念；警告",c:"教会",root:"ingat + per-…-an",coll:"memperingati 纪念 / memperingatkan 警告 / mengingatkan 提醒 / teringat 突然想起",syn:"⚠️ 一词两义：往回看=纪念，往前看=警告",ex:"Perbuatlah ini menjadi peringatan akan Aku.|你们应当如此行，为的是纪念我。"},
+ {w:"meningkat",p:"me-ning-kat",zh:"上升、增加",c:"高频",root:"tingkat + me-（t 脱落）",coll:"meningkatkan 提高某物 / peningkatan 提升 / peringkat 排名",syn:"tingkat 层级；rumah dua tingkat 两层楼",ex:"Jumlah jemaat meningkat.|会众人数增加了。"},
+ {w:"perintah",p:"pe-rin-tah 普-林-达",zh:"命令、诫命",c:"教会",root:"perintah",coll:"Sepuluh Perintah Allah 十诫 / menaati perintah 遵守命令",syn:"⚠️ pemerintah = 政府！memerintah = 统治。firman 神的话；hukum 律法",ex:"Kita harus menaati perintah Tuhan.|我们要遵守神的命令。"},
+ {w:"angin",p:"a-ngin 阿-銀（ng 一个音）",zh:"风",c:"生活",root:"angin",coll:"masuk angin 着凉 / kipas angin 电风扇 / angin kencang 大风 / angin ribut 暴风",syn:"badai 暴风雨（比喻人生风暴）；⚠️ 别读成「安-金」",ex:"Yesus menghardik angin dan danau.|耶稣斥责风和海。"},
+ {w:"puncak",p:"pun-cak 分-札克",zh:"顶峰、高潮",c:"地形",root:"puncak",coll:"puncak gunung 山顶 / jam puncak 高峰时段 / memuncak 达到顶点（p 脱落）",syn:"atas 上面；ujung 末端（水平）；puncak 是垂直的顶",ex:"Kami mendaki sampai ke puncak.|我们爬到山顶。"},
+ {w:"dingin",p:"di-ngin 迪-銀",zh:"冷、凉",c:"辨音",root:"dingin",coll:"air dingin 凉水 / kedinginan 冷得受不了",syn:"ke-…-an 表遭受：kedinginan / kepanasan / kehujanan",ex:"Saya kedinginan di dalam ruangan ber-AC.|我在空调房里觉得冷。"},
+ {w:"ingin",p:"i-ngin 伊-銀",zh:"想要",c:"辨音",root:"ingin",coll:"keinginan 愿望 / keinginan daging 肉体的私欲",syn:"mau 口语最常用；ingin 带愿望感；hendak 书面/圣经",ex:"Saya ingin belajar bahasa Indonesia.|我想学印尼语。"},
+ {w:"mungkin",p:"mung-kin 蒙-金",zh:"可能",c:"辨音",root:"mungkin",coll:"kemungkinan 可能性 / tidak mungkin 不可能",syn:"mustahil 不可能（正式）",ex:"Bagi Allah tidak ada yang mustahil.|在神凡事都能。"},
+ {w:"bening",p:"be-ning 布-寧",zh:"清澈的、透明的",c:"形容词",root:"bening",coll:"air bening 清水 / kaca bening 透明玻璃 / mata yang bening 清澈的眼睛",syn:"jernih 清澈也指清晰（pikiran jernih 清晰头脑）；transparan 透明（也指公开）；反义 keruh 浑浊",ex:"Air di danau itu sangat bening.|那湖里的水很清澈。"}
+];
+
+let deck = DATA.map((d,i)=>({...d,id:i}));
+let view = deck.slice();
+let idx = 0;
+
+const STORAGE_KEY = "kosakata-known";
+function loadKnown(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch(e){ return new Set(); }
+}
+function saveKnown(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...known])); } catch(e){}
+}
+let known = loadKnown();
+let cat = "全部";
+
+const $ = id => document.getElementById(id);
+const card = $("card");
+
+function cats(){
+  const set = ["全部", ...new Set(DATA.map(d=>d.c))];
+  $("cats").innerHTML = set.map(c=>
+    `<button class="chip ${c===cat?'on':''}" data-c="${c}">${c} ${c==='全部'?DATA.length:DATA.filter(d=>d.c===c).length}</button>`
+  ).join("");
+  $("cats").querySelectorAll(".chip").forEach(b=>{
+    b.onclick = ()=>{ cat=b.dataset.c; filter(); cats(); };
+  });
+}
+
+function filter(){
+  view = cat==="全部" ? deck.slice() : deck.filter(d=>d.c===cat);
+  idx = 0; render();
+}
+
+function render(){
+  if(!view.length) return;
+  card.classList.remove("flip");
+  const d = view[idx];
+  $("w").textContent = d.w;
+  $("p").textContent = d.p;
+  $("tagF").textContent = d.c + (known.has(d.id) ? " · 已掌握" : "");
+  $("tagB").textContent = d.c;
+  $("zh").textContent = d.zh;
+  const [ind, chn] = d.ex.split("|");
+  $("detail").innerHTML =
+    `<div class="row"><b>词根</b><i>${d.root}</i></div>` +
+    `<div class="row"><b>搭配</b><i>${d.coll}</i></div>` +
+    `<div class="row"><b>辨析</b><i>${d.syn}</i></div>` +
+    `<div class="ex"><em>${ind}</em>${chn}</div>`;
+  $("pos").textContent = `${idx+1} / ${view.length}`;
+  $("fill").style.width = `${(idx+1)/view.length*100}%`;
+  $("score").textContent = `已掌握 ${known.size}`;
+}
+
+function go(n){
+  if(!view.length) return;
+  idx = (idx + n + view.length) % view.length;
+  render();
+}
+
+card.onclick = ()=> card.classList.toggle("flip");
+$("prev").onclick = ()=> go(-1);
+$("again").onclick = ()=>{ known.delete(view[idx].id); saveKnown(); go(1); };
+$("know").onclick = ()=>{ known.add(view[idx].id); saveKnown(); go(1); };
+$("shuffle").onclick = ()=>{
+  for(let i=view.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [view[i],view[j]]=[view[j],view[i]]; }
+  idx=0; render();
+};
+$("reset").onclick = ()=>{
+  if(confirm("确定要清空全部学习进度吗？此操作无法撤销。")){
+    known.clear();
+    saveKnown();
+    render();
+  }
+};
+
+document.addEventListener("keydown", e=>{
+  if(e.key===" "){ e.preventDefault(); card.classList.toggle("flip"); }
+  if(e.key==="ArrowRight") go(1);
+  if(e.key==="ArrowLeft") go(-1);
+  if(e.key==="1"){ known.delete(view[idx].id); saveKnown(); go(1); }
+  if(e.key==="2"){ known.add(view[idx].id); saveKnown(); go(1); }
+});
+
+cats(); render();
+</script>
+</body>
+</html>
