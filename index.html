@@ -173,6 +173,46 @@
   .reset-btn:hover { border-color: var(--clove); color: var(--clove); }
   .reset-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
+  .tools-row { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+  .tools-row .reset-btn { margin: 0; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(22,33,29,.55);
+    align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--paper); border: 1.5px solid var(--ink); border-radius: 4px;
+    box-shadow: 5px 5px 0 var(--ink); width: 100%; max-width: 480px;
+    max-height: 80vh; display: flex; flex-direction: column;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; border-bottom: 1.5px solid var(--ink);
+  }
+  .modal-head h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer;
+    color: var(--ink); padding: 2px 6px;
+  }
+  .modal-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .modal-body { padding: 10px 18px; overflow-y: auto; }
+  .empty-hint { font-size: 13px; color: var(--mute); padding: 16px 0; text-align: center; }
+  .known-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 0; border-top: 1px solid var(--paper-2);
+  }
+  .known-item:first-child { border-top: none; }
+  .known-item .kw { font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px; }
+  .known-item .kz { font-size: 13px; color: var(--mute); margin-left: 8px; }
+  .known-item button {
+    flex: 0 0 auto; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px;
+    border: 1.5px solid var(--clove); border-radius: 999px; background: transparent;
+    color: var(--clove); cursor: pointer;
+  }
+  .known-item button:hover { background: var(--clove); color: #fff; }
+
   @media (prefers-reduced-motion: reduce) {
     .card { transition: none; }
     .btn:hover { transform: none; }
@@ -217,7 +257,20 @@
   </div>
 
   <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
-  <button class="reset-btn" id="reset">清空进度</button>
+  <div class="tools-row">
+    <button class="reset-btn" id="knownlist">已掌握列表 (<span id="knownCount">0</span>)</button>
+    <button class="reset-btn" id="reset">清空进度</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>已掌握的词</h2>
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body" id="knownListBody"></div>
+  </div>
 </div>
 
 <script>
@@ -275,7 +328,90 @@ const DATA = [
  {w:"dingin",p:"di-ngin 迪-銀",zh:"冷、凉",c:"辨音",root:"dingin",coll:"air dingin 凉水 / kedinginan 冷得受不了",syn:"ke-…-an 表遭受：kedinginan / kepanasan / kehujanan",ex:"Saya kedinginan di dalam ruangan ber-AC.|我在空调房里觉得冷。"},
  {w:"ingin",p:"i-ngin 伊-銀",zh:"想要",c:"辨音",root:"ingin",coll:"keinginan 愿望 / keinginan daging 肉体的私欲",syn:"mau 口语最常用；ingin 带愿望感；hendak 书面/圣经",ex:"Saya ingin belajar bahasa Indonesia.|我想学印尼语。"},
  {w:"mungkin",p:"mung-kin 蒙-金",zh:"可能",c:"辨音",root:"mungkin",coll:"kemungkinan 可能性 / tidak mungkin 不可能",syn:"mustahil 不可能（正式）",ex:"Bagi Allah tidak ada yang mustahil.|在神凡事都能。"},
- {w:"bening",p:"be-ning 布-寧",zh:"清澈的、透明的",c:"形容词",root:"bening",coll:"air bening 清水 / kaca bening 透明玻璃 / mata yang bening 清澈的眼睛",syn:"jernih 清澈也指清晰（pikiran jernih 清晰头脑）；transparan 透明（也指公开）；反义 keruh 浑浊",ex:"Air di danau itu sangat bening.|那湖里的水很清澈。"}
+ {w:"bening",p:"be-ning 布-寧",zh:"清澈的、透明的",c:"形容词",root:"bening",coll:"air bening 清水 / kaca bening 透明玻璃 / mata yang bening 清澈的眼睛",syn:"jernih 清澈也指清晰（pikiran jernih 清晰头脑）；transparan 透明（也指公开）；反义 keruh 浑浊",ex:"Air di danau itu sangat bening.|那湖里的水很清澈。"},
+ {w:"lirik",p:"li-rik 里-里克（r 轻弹）",zh:"歌词",c:"教会",root:"lirik（外来词 lyric）",coll:"lirik lagu 歌词 / hafal liriknya 背熟歌词 / kirim lirik 发歌词",syn:"⚠️ melirik = 瞟一眼（完全不同义）；lagu 歌曲；nada 音调；melodi 旋律",ex:"Saya belum hafal liriknya.|我还没背熟歌词。"},
+ {w:"bait",p:"ba-it 巴-伊特（两音节）",zh:"（歌词、诗的）段、节",c:"教会",root:"bait",coll:"bait pertama 第一段 / bait kedua 第二段 / reff 副歌",syn:"⚠️ bait kedua 第二段（同一首）vs lagu kedua 第二首（另一首）",ex:"Mari kita nyanyikan bait kedua.|让我们唱第二段。"},
+ {w:"himne",p:"him-ne 辛-内（e 读诶）",zh:"圣诗、古典赞美诗",c:"教会",root:"himne（外来词 hymn）",coll:"lagu himne 圣诗 / Kidung Jemaat（KJ）会众颂歌",syn:"kidung 颂歌（古典文雅）；lagu rohani modern 现代敬拜歌；lagu pujian 赞美诗（通用）",ex:"Minggu ini kita menyanyikan lagu himne yang klasik.|这周我们唱古典圣诗。"},
+ {w:"poster",p:"pos-ter 波斯-德尔（r 轻弹）",zh:"海报",c:"工作",root:"poster（外来词）",coll:"buat poster 做海报 / sebarkan poster 转发海报 / desain poster 设计海报",syn:"spanduk 横幅布条；brosur 宣传单；pengumuman 通知；warta jemaat 教会周报",ex:"Poster acara Natal sudah jadi.|圣诞活动的海报已经做好了。"},
+ {w:"disebarkan",p:"di-se-bar-kan 迪-色-巴尔-干",zh:"被转发、被传播",c:"词缀",root:"sebar + di-…-kan（被动）",coll:"Silakan disebarkan ya 欢迎转发 / menyebarkan 传播 / teruskan 转发",syn:"请求别人做事时用被动更礼貌：Silakan dibaca 请阅读；口语常用 di-share",ex:"Poster ini silakan disebarkan ya!|这张海报欢迎大家转发喔！"},
+ {w:"buku harian",p:"bu-ku ha-ri-an 布-姑 哈-里-安",zh:"日记（本）",c:"学习",root:"buku 书 + harian（hari + -an 每日的）",coll:"menulis buku harian 写日记 / catatan harian 每日记录 / diari 日记",syn:"jurnal 日志（也指学术期刊）；⚠️ DM 语序：中心词 buku 在前",ex:"Saya menulis buku harian dalam bahasa Indonesia.|我用印尼语写日记。"},
+ {w:"penutupan",p:"pe-nu-tu-pan 呗-努-都-班",zh:"闭幕、结业",c:"教会",root:"tutup + pe(n)-…-an（t 脱落）",coll:"ibadah penutupan 结业礼拜 / doa penutup 闭会祷告 / lagu penutup 结束诗歌",syn:"反义 pembukaan 开幕；perpisahan 告别（pisah）；wisuda 毕业典礼",ex:"Ibadah penutupan kelas Alkitab hari Minggu.|圣经课的结业礼拜在主日。"},
+ {w:"berat hati",p:"be-rat ha-ti 呗-拉特 哈-迪",zh:"不舍、心情沉重",c:"高频",root:"berat 重 + hati 心",coll:"dengan berat hati 依依不舍地 / tidak rela 舍不得",syn:"sedih 难过；terharu 深受感动；kangen/rindu 想念；rela 甘愿（反义）",ex:"Dengan berat hati kita harus berpisah.|我们不舍地必须分别。"},
+ {w:"kangen",p:"ka-ngen 卡-昂恩（ng 一个音）",zh:"想念（口语）",c:"口语",root:"kangen（爪哇语借入）",coll:"kangen kamu 想你 / kangen rumah 想家",syn:"rindu 想念（正式，也用于属灵：rindu akan Tuhan 渴慕神）",ex:"Saya akan kangen teman-teman sekelas.|我会想念同学们。"},
+ {w:"bertumbuh",p:"ber-tum-buh 呗-图姆-布（r 轻弹）",zh:"成长",c:"教会",root:"tumbuh + ber-（不及物）",coll:"bertumbuh dalam iman 在信心中成长 / pertumbuhan rohani 属灵成长 / menumbuhkan 培育（t 脱落）",syn:"berkembang 发展（能力事业）；dewasa 成熟；maju 进步",ex:"Kita harus bertumbuh dalam iman.|我们要在信心中成长。"},
+ {w:"merintis",p:"me-rin-tis 呋-林-迪斯（r 轻弹）",zh:"开拓、开创",c:"教会",root:"rintis + me-（r 开头不音变）",coll:"merintis gereja 开拓教会 / perintis 开拓者 / perintisan 开拓事工",syn:"menanam gereja 植堂；mendirikan 建立；pos PI 布道所",ex:"Mereka merintis gereja di desa itu.|他们在那个村庄开拓教会。"},
+ {w:"menginjili",p:"meng-in-ji-li 呋-因-吉-里",zh:"传福音（给某人）",c:"教会",root:"Injil + meng-…-i（元音开头变 meng-）",coll:"menginjili teman 向朋友传福音 / memberitakan Injil 传扬福音 / penginjilan 传福音事工",syn:"⚠️ 不说 berinjil。-i 因为宾语是被传的人；memberitakan 宾语是福音内容；bersaksi 作见证",ex:"Dia menginjili teman-temannya.|他向朋友们传福音。"},
+ {w:"menikmati",p:"me-nik-ma-ti 呋-尼克-马-迪",zh:"享受",c:"高频",root:"nikmat + me-…-i（n 顺接）",coll:"menikmati waktu 享受时光 / menikmati persekutuan 享受团契 / kenikmatan 乐趣",syn:"nikmat 美味的、恩惠；enak 好吃（较日常）",ex:"Mari kita nikmati waktu kebersamaan ini.|让我们享受这相聚的时光吧。"},
+ {w:"kebersamaan",p:"ke-ber-sa-ma-an 哥-呗-撒-马-安",zh:"相聚、同在感",c:"教会",root:"sama → bersama + ke-…-an",coll:"waktu kebersamaan 相聚时光 / kebersamaan jemaat 会众的团契感",syn:"pertemuan 会面；persekutuan 团契；berkumpul 聚集",ex:"Terima kasih untuk waktu kebersamaan hari ini.|谢谢今天相聚的时光。"},
+ {w:"samping",p:"sam-ping 三-兵（ng 一个音）",zh:"旁边、侧面",c:"高频",root:"samping",coll:"di samping 在…旁边 / bagian samping 侧边部分 / dari samping 从旁边",syn:"sebelah 隔壁（紧邻位置）；di samping itu 另外（连接词）",ex:"Masuknya dari samping polsek ya?|从派出所旁边进去，对吧？"},
+ {w:"polsek",p:"pol-sek 波尔-谢克（e 读诶）",zh:"派出所",c:"生活",root:"缩写：polisi sektor",coll:"polres 市级警局 / polda 省级警局 / polantas 交警",syn:"印尼爱用缩写：puskesmas 卫生所 / SPBU 加油站 / damkar 消防局",ex:"Gereja ada di samping polsek.|教会在派出所旁边。"},
+ {w:"ada apa",p:"a-da a-pa 阿-达 阿-趴",zh:"怎么了、出什么事了",c:"口语",root:"ada 有 + apa 什么",coll:"Ada apa? 怎么了？/ Ada apa ya? 是怎么回事呀？",syn:"kenapa 为什么；⚠️ apa saja 有哪些（列举）",ex:"Instagram minta reset password, ada apa ya?|Instagram 要求重置密码，是怎么回事呀？"},
+ {w:"apa saja",p:"a-pa sa-ja 阿-趴 撒-扎",zh:"有哪些、都有什么",c:"口语",root:"apa + saja（列举）",coll:"siapa saja 有谁 / di mana saja 在哪些地方 / kapan saja 随时",syn:"⚠️ 也可表「任何…都行」：Apa saja boleh 什么都可以",ex:"Lagu yang mau dinyanyikan apa saja ya?|要唱的诗歌有哪些呢？"},
+ {w:"toh",p:"toh 多（h 轻送气）",zh:"反正、终归",c:"口语",root:"toh",coll:"toh sudah tahu 反正已经知道了 / toh masih ada waktu 反正还有时间",syn:"lagipula 再说、况且；bagaimanapun 无论如何（正式）",ex:"Nggak apa-apa, toh gak usah pakai lirik Mandarin.|没关系，反正不用中文歌词。"},
+ {w:"gak usah",p:"gak u-sah 嘎克-乌-撒",zh:"不用、不必",c:"口语",root:"tidak + usah（usah 只跟否定连用）",coll:"nggak usah repot-repot 不用麻烦了 / tidak usah khawatir 不用担心",syn:"gak usah 劝阻动作；gak butuh 陈述不需要某物；gak perlu 最百搭",ex:"Nggak usah bawa payung, hari ini cerah.|不用带伞，今天天晴。"},
+ {w:"seandainya",p:"se-an-dai-nya 色-安-代-娘",zh:"假如（与事实相反）",c:"语法",root:"se- + andai + -nya",coll:"seandainya aku kaya 假如我有钱 / kalau 如果（口语）/ jika 如果（书面）",syn:"⚠️ 印尼语没有虚拟语气，动词永不变形，只靠连词表假设",ex:"Seandainya aku bisa bahasa Indonesia, aku akan memimpin ibadah.|假如我会说印尼语，我就能带领敬拜。"},
+ {w:"kebahagiaan",p:"ke-ba-ha-gi-a-an 哥-巴-哈-吉-啊-安",zh:"幸福（感）",c:"词缀",root:"bahagia + ke-…-an（形容词→抽象名词）",coll:"kebahagiaan keluarga 家庭的幸福 / bahagia 幸福的（形容词）",syn:"⚠️ bahagia 是形容词，作名词要加 ke-…-an；senang 开心（较轻）；sukacita 喜乐（属灵）",ex:"Aku nggak akan ngerti kebahagiaan jadi papa.|我不会懂当爸爸的幸福。"},
+ {w:"yaitu",p:"ya-i-tu 呀-伊-图",zh:"也就是、即",c:"语法",root:"ya + itu",coll:"yaitu ini 就是这个 / adalah 是",syn:"yakni 即（书面同义）；misalnya 例如",ex:"Sekarang ada alasan saya untuk ke Cina, yaitu ini.|现在我有理由去中国了，就是这个。"},
+ {w:"tadi",p:"ta-di 达-迪",zh:"刚才",c:"高频",root:"tadi",coll:"tadi pagi 今天早上 / tadi malam 昨晚 / dari tadi 从刚才起",syn:"kemarin 昨天；barusan 刚刚（更近）；nanti 待会儿（未来）",ex:"Tadi saya mau tanya ke kamu tapi lupa.|刚才我想问你，但忘了。"},
+ {w:"salah paham",p:"sa-lah pa-ham 撒-拉 趴-汉",zh:"误会、理解错",c:"高频",root:"salah 错 + paham 理解",coll:"salah mengerti 理解错 / salah ingat 记错 / salah dengar 听错",syn:"「salah + 动词」是万能句型：salah tulis 写错 / salah bilang 说错",ex:"Maaf, saya salah paham arti kata itu.|抱歉，我理解错那个词的意思了。"},
+ {w:"cuti",p:"cu-ti 朱-迪（c 读 ch）",zh:"休假、请假",c:"工作",root:"cuti",coll:"cuti panjang 长假 / cuti tahunan 年假 / sedang cuti 正在休假",syn:"libur 放假日；istirahat 短暂休息；⚠️ 别读成「苦迪」",ex:"Setelah cuti panjang, aku kembali masuk kerja.|长假之后，我回来上班了。"},
+ {w:"bos",p:"bos 波斯",zh:"老板",c:"工作",root:"bos（外来词 boss）",coll:"bosku 我老板 / atasan 上司 / majikan 雇主",syn:"pimpinan 领导（pimpin 家族）；⚠️ 别和 alasan 理由 混淆",ex:"Bosku baik sekali.|我老板人很好。"},
+ {w:"darat",p:"da-rat 达-拉特（r 轻弹）",zh:"陆地",c:"地形",root:"darat",coll:"mendarat 着陆 / daratan Cina 中国大陆 / jalur darat 陆路",syn:"⚠️ 三兄弟：darat 陆地 / dasar 底部基础 / daerah 地区。tanah 土地（tanah air 祖国）",ex:"Pesawatnya akan mendarat sebentar lagi.|飞机马上要着陆了。"},
+ {w:"pindah",p:"pin-dah 冰-达",zh:"搬、迁移",c:"生活",root:"pindah",coll:"pindah kantor 搬办公室 / memindahkan 把…搬走（p 脱落）/ dipindahkan 被调职",syn:"perpindahan 迁移（抽象）；⚠️ 经文里「Suruhlah kami pindah」求打发我们进入",ex:"Kantor saya sudah pindah ke sebelah.|我的办公室已经搬到旁边了。"},
+ {w:"total",p:"to-tal 多-达尔",zh:"总计、总共",c:"高频",root:"total（外来词）",coll:"Totalnya berapa? 一共多少钱？/ total harga 总价 / secara total 彻底地",syn:"jumlah 数量总数（更本土）；⚠️ sejumlah = 若干、一些，不能表「总共」",ex:"Totalnya berapa, Pak?|先生，一共多少钱？"},
+ {w:"selain itu",p:"se-la-in i-tu 色-拉-因 伊-图",zh:"另外、除此之外",c:"语法",root:"selain 除了 + itu",coll:"selain itu…juga 另外…也 / di samping itu 同时（正式）",syn:"lagipula 再说（补充理由）；terus/lalu 然后（口语顺序）；kemudian 接着",ex:"Selain itu, saya juga membuat buku dengan AI.|另外，我也用 AI 做了一本书。"},
+ {w:"mengerjakan",p:"meng-er-ja-kan 呋-额尔-扎-干",zh:"做（作业、任务）",c:"工作",root:"kerja + meng-…-kan（k 脱落）",coll:"mengerjakan PR 做作业 / mengerjakan tugas 做任务 / PR = pekerjaan rumah",syn:"bekerja 工作（不及物）；membuat 制作；melakukan 做（行为）",ex:"Saya sudah mengerjakan PR dan membaca buku.|我写了作业也读了书。"},
+ {w:"kerasukan",p:"ke-ra-su-kan 哥-拉-苏-干",zh:"被（鬼）附",c:"教会",root:"rasuk + ke-…-an（表遭受）",coll:"kerasukan setan 被鬼附 / kerasukan roh jahat 被污鬼附",syn:"ke-…-an 表遭受：kedinginan 冷得受不了 / kehujanan 被雨淋",ex:"Orang yang kerasukan itu sudah waras.|那被鬼附的人已经清醒了。"},
+ {w:"waras",p:"wa-ras 哇-拉斯（r 轻弹）",zh:"神志清醒、正常",c:"身体",root:"waras",coll:"sudah waras 已经清醒了 / tidak waras 精神失常 / kewarasan 理智",syn:"sadar 清醒（意识层面）；sehat 健康；反义 gila 疯",ex:"Orang itu duduk, sudah berpakaian dan sudah waras.|那人坐着，穿上衣服，神志清醒了。"},
+ {w:"berkeliaran",p:"ber-ke-li-a-ran 呗-哥-里-阿-兰",zh:"四处游荡",c:"动作",root:"keliar + ber-…-an（表反复/四散）",coll:"berkeliaran di jalan 在街上游荡 / anjing berkeliaran 野狗乱跑",syn:"ber-…-an 也表互相：bersalaman 互相握手 / berpelukan 互相拥抱",ex:"Siang malam ia berkeliaran di pekuburan.|他昼夜在坟茔里游荡。"},
+ {w:"pekuburan",p:"pe-ku-bu-ran 呗-姑-布-兰",zh:"墓地、坟场",c:"地形",root:"kubur + pe-…-an（表场所）",coll:"kuburan 坟墓 / menguburkan 埋葬 / makam 陵墓（较尊敬）",syn:"pe-…-an 表场所：perpustakaan 图书馆 / perumahan 住宅区",ex:"Datanglah seorang yang kerasukan dari pekuburan.|有一个被鬼附的人从坟茔那里出来。"},
+ {w:"memberitakan",p:"mem-be-ri-ta-kan 门-呗-里-达-干",zh:"传扬、宣告",c:"教会",root:"berita 消息 + mem-…-kan",coll:"memberitakan Injil 传福音 / pemberitaan firman 传讲信息",syn:"beritahukan 告知（beri + tahu）；menceritakan 讲述；bersaksi 作见证",ex:"Ia mulai memberitakan apa yang telah diperbuat Yesus.|他开始传扬耶稣为他做的事。"},
+ {w:"menular",p:"me-nu-lar 呋-努-拉尔（r 轻弹）",zh:"传染、蔓延",c:"身体",root:"tular + me-（t 脱落）",coll:"penyakit menular 传染病 / tertular 被传染 / menularkan 传给别人",syn:"⚠️ 也可用于正面：Semangatnya menular 他的热情感染了大家",ex:"Kusta adalah penyakit menular.|麻风是传染病。"},
+ {w:"ditolak",p:"di-to-lak 迪-多-拉克",zh:"被拒绝、被排斥",c:"高频",root:"tolak + di-（被动）",coll:"lamaran ditolak 申请被拒 / menolak 拒绝 / penolakan 拒绝（名词）",syn:"反义 diterima 被接纳（terima 家族）；tertolak 遭弃绝",ex:"Manusia menolak kita, tetapi Tuhan menerima kita.|人拒绝我们，但神接纳我们。"},
+ {w:"tersembunyi",p:"ter-sem-bu-nyi 呗-森-布-尼",zh:"隐藏的、隐秘的",c:"词缀",root:"sembunyi + ter-（状态）",coll:"harta tersembunyi 隐藏的宝藏 / bersembunyi 躲藏 / menyembunyikan 把…藏起来",syn:"三分工：ber- 自己躲 / meny-…-kan 藏东西 / ter- 藏着的状态",ex:"Tidak ada dosa yang tersembunyi di hadapan Tuhan.|在神面前没有隐藏的罪。"},
+ {w:"malah",p:"ma-lah 马-拉",zh:"反而、反倒、竟然",c:"口语",root:"malah / malahan",coll:"malah tambah parah 反而更严重 / justru 恰恰（书面同义）",syn:"tetapi 一般转折；padahal 明明…却（事实反差）；malah 结果反预期",ex:"Orang kusta dijauhi semua orang, tetapi Yesus malah menjamahnya.|麻风病人被众人远离，耶稣反而触摸他。"},
+ {w:"mencapai",p:"men-ca-pai 门-掐-派（c 读 ch）",zh:"达到、达成",c:"高频",root:"capai + men-（c 不脱落）",coll:"mencapai tujuan 达到目标 / mencapai puncak 登顶 / tercapai 得以实现",syn:"⚠️ capai/capek 单独用 = 累。判断：mencapai + 宾语 = 达到",ex:"Setiap orang berharap dapat mencapai tujuannya.|每个人都盼望能达到自己的目标。"},
+ {w:"mengikat",p:"meng-i-kat 呋-伊-卡特",zh:"捆绑、约束",c:"动作",root:"ikat + meng-（元音开头）",coll:"mengikat manusia 捆绑人 / terikat 被束缚 / ikatan 纽带",syn:"membebaskan 释放（反义，bebas）；membelenggu 上镣铐",ex:"Dosa mengikat manusia, tetapi Yesus membebaskan kita.|罪捆绑人，但耶稣释放我们。"},
+ {w:"memperbarui",p:"mem-per-ba-ru-i 门-呗-巴-鲁-伊",zh:"更新",c:"词缀",root:"baru + memper-…-i",coll:"memperbarui hati 更新内心 / diperbarui 被更新 / pembaruan 更新（名词）",syn:"memper- + 形容词 = 使更…：memperbesar 扩大 / memperdalam 加深 / memperkuat 加强",ex:"Tuhan memperbarui hati kita.|神更新我们的心。"},
+ {w:"berkenan",p:"ber-ke-nan 呗-哥-南",zh:"乐意、悦纳；蒙悦纳",c:"教会",root:"kenan 中意 + ber-",coll:"Tuhan berkenan 神乐意 / berkenan kepada Allah 蒙神喜悦 / berkenan di hadapan Allah",syn:"⚠️ 两个方向：神 berkenan = 神乐意；人/事 berkenan = 蒙悦纳。别与 terkena（遭受）混淆",ex:"Orang itu tidak berkenan di hadapan Allah.|那人在神面前不蒙悦纳。"},
+ {w:"persoalan",p:"per-so-a-lan 呗-索-啊-兰",zh:"问题、难题",c:"高频",root:"soal + per-…-an",coll:"Persoalannya… 问题是… / Masalahnya… 问题是（更口语）/ menyelesaikan persoalan 解决问题",syn:"⚠️ masalah 麻烦难题；pertanyaan 提出的疑问；soal 题目。中文都叫「问题」要分清",ex:"Persoalannya, kita belum siap.|问题是，我们还没准备好。"},
+ {w:"pemerintahan",p:"pe-me-rin-ta-han 呗-呋-林-达-汉",zh:"治理、执政、政权",c:"正式",root:"perintah + pe-…-an",coll:"di bawah pemerintahan 在…执政之下 / masa pemerintahan 执政时期",syn:"⚠️ pemerintah = 政府机构（施动者）；pemerintahan = 治理过程（抽象）",ex:"Yesus menderita di bawah pemerintahan Pontius Pilatus.|耶稣在本丢·彼拉多执政时受苦。"},
+ {w:"segenap",p:"se-ge-nap 色-哥-拿普",zh:"全部的、整个的",c:"教会",root:"se- + genap（完整）",coll:"segenap hati 全心 / segenap jiwa 全灵 / segenap keluarga 全家",syn:"segala 一切（种种）；seluruh 整个范围；semua 所有（最日常）",ex:"Segenap hatiku menyembah-Mu.|我全心敬拜你。"},
+ {w:"mengucapkan",p:"meng-u-cap-kan 呋-乌-掐普-干",zh:"说出、致以（谢意/祝贺）",c:"高频",root:"ucap + meng-…-kan（元音开头）",coll:"mengucapkan terima kasih 致谢 / mengucapkan selamat 道贺 / ucapan 致辞",syn:"mengatakan 说某内容；berkata 说道（文学）；⚠️ c 读 ch",ex:"Saya ingin mengucapkan terima kasih kepada Tuhan.|我想向神致以感谢。"},
+ {w:"bersalaman",p:"ber-sa-la-man 呗-撒-拉-曼",zh:"（互相）握手问候",c:"教会",root:"salam + ber-…-an（表互相）",coll:"saling bersalaman 彼此握手 / berjabat tangan 握手（正式）/ menyapa 打招呼",syn:"ber-…-an 表互相：berpelukan 互相拥抱 / berciuman 互相亲吻 / berpandangan 互相对视",ex:"Mari kita saling bersalaman.|我们互相握手问候吧。"},
+ {w:"mencurahkan",p:"men-cu-rah-kan 门-朱-拉-干（c 读 ch）",zh:"倾倒、倾注、倾诉",c:"教会",root:"curah + men-…-kan（c 不脱落）",coll:"mencurahkan isi hati 倾诉心事 / mencurahkan kasih 倾倒慈爱 / mencurahkan Roh Kudus 浇灌圣灵",syn:"berbagi 分享；menumpahkan 倒出（液体）",ex:"Tuhan mencurahkan Roh Kudus kepada umat-Nya.|神将圣灵浇灌给他的子民。"},
+ {w:"berkumpul",p:"ber-kum-pul 呗-姑姆-布尔",zh:"聚集、聚会",c:"教会",root:"kumpul + ber-（不及物）",coll:"jemaat berkumpul 会众聚集 / perkumpulan 团体 / kumpulan lagu 歌曲合集",syn:"⚠️ mengumpulkan 是及物：收集东西（k 脱落）。berkumpul 是人自己聚",ex:"Jemaat berkumpul untuk beribadah.|会众聚集敬拜。"},
+ {w:"beranda",p:"be-ran-da 呗-兰-达",zh:"门廊、阳台；（App）首页",c:"生活",root:"beranda（词根词，源自梵语）",coll:"beranda rumah 家门廊 / kembali ke beranda 返回首页",syn:"⚠️ 不是 ber- + anda！teras 露台；balkon 楼上阳台；halaman 院子/页面",ex:"Klik tombol ini untuk kembali ke beranda.|点这个按钮返回首页。"},
+ {w:"badan",p:"ba-dan 巴-丹",zh:"身体、身躯；机构",c:"身体",root:"badan",coll:"badan capek 身体累 / badan usaha 企业机构 / Badan PBB 联合国机构",syn:"tubuh 躯体（书面/医学：suhu tubuh 体温）；jasmani 肉体的（配 rohani）；raga（olahraga 运动）",ex:"Badan saya capek sekali hari ini.|我今天身体很累。"},
+ {w:"tunjukkan",p:"tun-juk-kan 图恩-朱克-干",zh:"出示、展示（…吧）",c:"高频",root:"tunjuk + -kan（注意两个 k）",coll:"Tolong tunjukkan KTP 请出示身份证 / menunjukkan 表明 / petunjuk 指南说明",syn:"⚠️ menunjuk 用手指向；menunjukkan 把东西呈现给人看",ex:"Tolong tunjukkan tiket Anda.|请出示您的票。"},
+ {w:"terbiasa",p:"ter-bi-a-sa 呗-比-啊-撒",zh:"习惯了的",c:"词缀",root:"biasa + ter-（已完成状态）",coll:"sudah terbiasa 已经习惯 / terbiasa dengan 习惯于（+名词）/ semakin terbiasa 越来越习惯",syn:"⚠️ 别和 terkena（遭受）、terisolasi（被隔离）混淆",ex:"Saya sudah terbiasa berdoa dalam bahasa Indonesia.|我已经习惯用印尼语祷告了。"},
+ {w:"alasan",p:"a-la-san 阿-拉-三",zh:"理由、原因、借口",c:"高频",root:"alas 基础 + -an",coll:"alasan hidup 活着的理由 / mencari alasan 找借口 / alasan yang kuat 充分的理由",syn:"sebab 原因（起因）；karena 因为（连词）；⚠️ 别和 bos 老板 记混",ex:"Apa alasanmu terlambat?|你迟到的理由是什么？"},
+ {w:"sesuatu",p:"se-su-a-tu 色-苏-啊-图（四音节）",zh:"某物、某事",c:"高频",root:"se- + suatu",coll:"ada sesuatu 有些事 / sesuatu yang aneh 某种奇怪的东西",syn:"seseorang 某人；apa pun 任何东西；⚠️ suatu 后接名词（suatu hari 某天）",ex:"Ada sesuatu yang ingin kukatakan.|我有些话想说。"},
+ {w:"sebab",p:"se-bab 色-巴普",zh:"因为；原因",c:"语法",root:"sebab",coll:"sebab-akibat 因果 / oleh sebab itu 因此 / karena 因为（口语高频）",syn:"karena 最日常；sebab 稍书面（讲道常用）；oleh karena itu 所以",ex:"Kita perlu menghadapinya, sebab ini penting.|我们需要面对它，因为这很重要。"},
+ {w:"dibentuk",p:"di-ben-tuk 迪-本-图克",zh:"被塑造、被形成",c:"词缀",root:"bentuk + di-（被动）",coll:"dibentuk oleh Tuhan 被神塑造 / membentuk tim 组队 / berbentuk hati 心形的",syn:"dicetak 被印制/重铸（cetak）；diperbarui 被更新",ex:"Kita perlu dibentuk kembali oleh Tuhan.|我们需要被神重新塑造。"},
+ {w:"cerita",p:"ce-ri-ta 扯-里-达（c 读 ch）",zh:"故事；（口语）讲述",c:"高频",root:"cerita",coll:"cerita Alkitab 圣经故事 / bercerita 讲故事（不及物）/ menceritakan 讲述某事（及物）",syn:"panjang ceritanya 说来话长；cerpen 短篇小说；kisah 经历故事",ex:"Kakek suka bercerita kepada cucunya.|爷爷喜欢给孙子讲故事。"},
+ {w:"melarang",p:"me-la-rang 呋-拉-朗",zh:"禁止、不准",c:"高频",root:"larang + me-（l 顺接）",coll:"Dilarang merokok 禁止吸烟 / Dilarang masuk 禁止入内 / larangan 禁令",syn:"⚠️ Dilarang… 是印尼公共标语标配，认识它走遍印尼看得懂牌子",ex:"Dilarang merokok di dalam gereja.|教会内禁止吸烟。"},
+ {w:"membahas",p:"mem-ba-has 门-巴-哈斯",zh:"讨论、探讨",c:"学习",root:"bahas + mem-（b 保留）",coll:"membahas topik 讨论话题 / pembahasan 探讨（名词）/ 口语直接用词根：Bahas apa?",syn:"berdiskusi 讨论（ber-，不及物）；mendiskusikan 讨论某事（及物）",ex:"Mari kita membahas Firman Tuhan hari ini.|我们今天来探讨神的话语。"},
+ {w:"menjamah",p:"men-ja-mah 门-家-马",zh:"触摸；（属灵）触摸眷顾",c:"教会",root:"jamah + men-（j 保留）",coll:"Tuhan menjamah hatiku 神触摸我的心 / dijamah Tuhan 被神触摸",syn:"menyentuh 触摸（日常更常用）；tersentuh 被触动（情感）",ex:"Tuhan, jamahlah hatiku.|主啊，求你触摸我的心。"},
+ {w:"tersentuh",p:"ter-sen-tuh 呗-森-图",zh:"被触动、被感动",c:"高频",root:"sentuh + ter-（不自主状态）",coll:"hati tersentuh 心被触动 / menyentuh 触摸（主动）",syn:"terharu 深受感动（更强）；⚠️ ber/me 主动，ter 被动",ex:"Hatiku tersentuh mendengar kesaksiannya.|听了他的见证，我的心被触动了。"},
+ {w:"dicemari",p:"di-ce-ma-ri 迪-扯-马-里（c 读 ch）",zh:"被污染、被玷污",c:"词缀",root:"cemar + di-…-i（被动）",coll:"dicemari dosa 被罪玷污 / mencemari 污染 / tercemar 受污染的 / pencemaran udara 空气污染",syn:"kenajisan 污秽（宗教书面）；kotor 脏（日常）",ex:"Hidup kita jangan dicemari dosa.|我们的生命不要被罪玷污。"},
+ {w:"penampilan",p:"pe-nam-pi-lan 呗-南-比-兰",zh:"外表、形象；演出表现",c:"高频",root:"tampil + pe(n)-…-an（t 脱落）",coll:"penampilan rapi 外表整洁 / tampil di panggung 登台 / menampilkan 展示",syn:"⚠️ ciri 外部特征；sifat 内在性格。三个分工要分清",ex:"Jangan menilai orang dari penampilan.|别以外表评判人。"},
+ {w:"ciri",p:"ci-ri 其-里（c 读 ch，r 轻弹）",zh:"特征、特点",c:"高频",root:"ciri",coll:"ciri-ciri 特征（常用叠词）/ ciri khas 特色、独特之处",syn:"sifat 内在性格；karakter 品格；penampilan 外表形象",ex:"Apa ciri-ciri penyakit kusta?|麻风病的特征是什么？"},
+ {w:"sifat",p:"si-fat 西-法特",zh:"性格、性质、属性",c:"高频",root:"sifat",coll:"sifatnya ramah 性格友善 / sifat Allah 神的属性 / bersifat 具有…性质",syn:"ciri 管外部特征，sifat 管内在性质；karakter 品格（外来词）",ex:"Sifatnya ramah dan sabar.|他的性格友善又有耐心。"},
+ {w:"memburuk",p:"mem-bu-ruk 们-布-鲁克",zh:"恶化、变坏",c:"高频",root:"buruk + mem-（b 保留，me- 表变成某状态）",coll:"kondisi memburuk 状况恶化 / hubungan memburuk 关系变坏",syn:"⚠️ 别和 membusuk（腐烂，词根 busuk）混淆",ex:"Keadaannya memburuk, kita harus segera bertindak.|情况恶化了，我们必须立刻行动。"},
+ {w:"bertindak",p:"ber-tin-dak 呗-丁-达克",zh:"采取行动、行事",c:"工作",root:"tindak + ber-",coll:"bertindak cepat 迅速行动 / tindakan 行动措施 / menindak 查处",syn:"melakukan 做（行为）；bergerak 行动移动",ex:"Kita harus bertindak cepat.|我们必须迅速行动。"},
+ {w:"justru",p:"jus-tru 朱斯-特鲁",zh:"恰恰、反而",c:"语法",root:"justru",coll:"justru menyerang 反而攻击 / justru itu 恰恰是那个",syn:"malah 反而（口语更常用）；justru 更书面，强调「恰恰相反/恰恰正是」",ex:"Penyakit itu justru menyerang orang muda.|那病反而侵袭年轻人。"},
+ {w:"menyerang",p:"me-nye-rang 呋-捏-朗",zh:"攻击、袭击、侵袭",c:"动作",root:"serang + meny-（s 脱落）",coll:"menyerang musuh 攻击敌人 / serangan jantung 心脏病发作 / diserang 被攻击",syn:"menghajar 痛打（口语粗犷）；memukul 打（中性）",ex:"Dosa menyerang dan mengikat kita.|罪攻击并捆绑我们。"},
+ {w:"kendali",p:"ken-da-li 根-达-利",zh:"控制、掌控",c:"高频",root:"kendali（本义马缰绳）",coll:"di luar kendali 失控 / mengendalikan 控制（k 脱落）/ terkendali 受控的",syn:"kuasa 权柄能力；menguasai 掌控支配",ex:"Situasi di luar kendali.|局势失控了。"},
+ {w:"perakitan",p:"pe-ra-ki-tan 呗-拉-吉-丹",zh:"组装、装配",c:"工作",root:"rakit + pe-…-an",coll:"pabrik perakitan 装配厂 / merakit komputer 组装电脑 / komputer rakitan 组装电脑",syn:"⚠️ rakit 也指竹筏；别和 penyakitan（多病的）混淆",ex:"Dia bisa merakit komputer sendiri.|他会自己组装电脑。"},
+ {w:"khotbah",p:"khot-bah 霍特-巴（kh 喉音）",zh:"讲道、证道",c:"教会",root:"khotbah（阿拉伯语借词）",coll:"naskah khotbah 讲章 / berkhotbah 讲道 / pengkhotbah 讲道者 / bahan khotbah 讲道材料",syn:"renungan 灵修短信息；firman 神的话语；kebaktian 崇拜聚会",ex:"Khotbah hari ini diambil dari Yohanes pasal 3.|今天的证道取自约翰福音 3 章。"},
+ {w:"memimpin",p:"me-mim-pin 呋-明-兵",zh:"带领、主持",c:"教会",root:"pimpin + me-（p 脱落）",coll:"memimpin ibadah 主持敬拜 / memimpin pujian 领诗 / dipimpin oleh 由…带领 / pemimpin 领袖",syn:"membawakan acara 主持流程；liturgos 司会；pelayanan 服事",ex:"Minggu depan saya memimpin pujian.|下周我领诗。"},
+ {w:"pasal",p:"pa-sal 巴-萨尔",zh:"（圣经/法律的）章、条",c:"教会",root:"pasal",coll:"Yohanes pasal 3 ayat 16 约翰福音 3 章 16 节 / 冒号「:」读作 ayat",syn:"ayat 节、条款；Alkitab 圣经；Perjanjian Lama/Baru 旧约/新约",ex:"Mari kita buka Alkitab dalam Yohanes pasal 3 ayat 16.|让我们翻开圣经约翰福音 3 章 16 节。"},
+ {w:"cuaca",p:"cu-a-ca 朱-啊-掐（两个 c 都读 ch）",zh:"天气",c:"生活",root:"cuaca",coll:"cuaca cerah 天气晴朗 / cuacanya bagus 天气好 / Bagaimana cuaca hari ini?",syn:"cerah 晴 / mendung 阴 / berawan 多云 / hujan 雨 / musim hujan 雨季 / musim kemarau 旱季",ex:"Hari ini cuacanya cerah sekali!|今天天气很晴朗！"},
+ {w:"potong rambut",p:"po-tong ram-but 波-东 拉姆-布特",zh:"剪头发",c:"生活",root:"potong 剪 + rambut 头发",coll:"potong pendek 剪短 / rapikan saja 修整齐就好 / tipiskan pakai mesin 用推子推薄",syn:"memotong 剪（主动给别人剪）；keramas 洗头；cukur 剃",ex:"Saya mau potong rambut, potong pendek ya.|我想剪头发，剪短一点。"},
+ {w:"makan malam",p:"ma-kan ma-lam 马-甘 马-拉姆",zh:"吃晚饭",c:"生活",root:"makan 吃 + malam 晚上",coll:"sarapan 早餐 / makan siang 午餐 / Sudah makan? 吃了吗？",syn:"⚠️ 日常口语常不强调哪一餐，直接说 makan；lapar 饿 / kenyang 饱",ex:"Kamu sudah makan malam?|你吃晚饭了吗？"},
+ {w:"masuk kerja",p:"ma-suk ker-ja 马-苏克 哥尔-扎",zh:"上班",c:"工作",root:"masuk 进入 + kerja 工作",coll:"pulang kerja 下班 / saat kerja 工作时 / kembali bekerja 回去工作",syn:"⚠️ keluar dari kerja = 辞职！「下班」要说 pulang kerja",ex:"Sore ini aku pulang kerja, terus potong rambut.|今天下午我下班后去剪头发。"},
+ {w:"perasaan",p:"pe-ra-sa-an 呗-拉-撒-安",zh:"感觉、情绪",c:"高频",root:"rasa + pe-…-an",coll:"perasaanku senang 我心情好 / merasa senang 感觉开心 / perasaan campur aduk 心情复杂",syn:"⚠️ 别说 rasa baik。rasa 偏味道/触感；情绪用 perasaan 或动词 merasa",ex:"Perasaanku senang karena sebentar lagi pulang ke China.|我心情不错，因为快要回中国了。"}
 ];
 
 let deck = DATA.map((d,i)=>({...d,id:i}));
@@ -309,17 +445,30 @@ function cats(){
 }
 
 function filter(){
-  view = cat==="全部" ? deck.slice() : deck.filter(d=>d.c===cat);
+  view = deck.filter(d => (cat==="全部" || d.c===cat) && !known.has(d.id));
   idx = 0; render();
 }
 
 function render(){
-  if(!view.length) return;
+  $("knownCount").textContent = known.size;
+  $("score").textContent = `已掌握 ${known.size}`;
+  if(!view.length){
+    card.classList.remove("flip");
+    $("tagF").textContent = cat;
+    $("tagB").textContent = cat;
+    $("w").textContent = "🎉";
+    $("p").textContent = "";
+    $("zh").textContent = "这个分类的词你都记住了！";
+    $("detail").innerHTML = `<div class="row"><i>点击下方"已掌握列表"可以把词移出来重新练习。</i></div>`;
+    $("pos").textContent = "0 / 0";
+    $("fill").style.width = "0%";
+    return;
+  }
   card.classList.remove("flip");
   const d = view[idx];
   $("w").textContent = d.w;
   $("p").textContent = d.p;
-  $("tagF").textContent = d.c + (known.has(d.id) ? " · 已掌握" : "");
+  $("tagF").textContent = d.c;
   $("tagB").textContent = d.c;
   $("zh").textContent = d.zh;
   const [ind, chn] = d.ex.split("|");
@@ -330,7 +479,6 @@ function render(){
     `<div class="ex"><em>${ind}</em>${chn}</div>`;
   $("pos").textContent = `${idx+1} / ${view.length}`;
   $("fill").style.width = `${(idx+1)/view.length*100}%`;
-  $("score").textContent = `已掌握 ${known.size}`;
 }
 
 function go(n){
@@ -339,10 +487,34 @@ function go(n){
   render();
 }
 
+function markKnown(){
+  if(!view.length) return;
+  known.add(view[idx].id);
+  saveKnown();
+  view.splice(idx, 1);
+  if(view.length) idx = idx % view.length;
+  render();
+}
+
+function renderKnownList(){
+  const items = [...known].map(id => deck.find(d => d.id === id)).filter(Boolean);
+  $("knownListBody").innerHTML = items.length
+    ? items.map(d => `<div class="known-item"><div><span class="kw">${d.w}</span><span class="kz">${d.zh}</span></div><button data-id="${d.id}">移出</button></div>`).join("")
+    : `<p class="empty-hint">还没有已掌握的词。</p>`;
+  $("knownListBody").querySelectorAll("button[data-id]").forEach(b=>{
+    b.onclick = ()=>{
+      known.delete(Number(b.dataset.id));
+      saveKnown();
+      renderKnownList();
+      filter();
+    };
+  });
+}
+
 card.onclick = ()=> card.classList.toggle("flip");
 $("prev").onclick = ()=> go(-1);
-$("again").onclick = ()=>{ known.delete(view[idx].id); saveKnown(); go(1); };
-$("know").onclick = ()=>{ known.add(view[idx].id); saveKnown(); go(1); };
+$("again").onclick = ()=>{ go(1); };
+$("know").onclick = ()=> markKnown();
 $("shuffle").onclick = ()=>{
   for(let i=view.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [view[i],view[j]]=[view[j],view[i]]; }
   idx=0; render();
@@ -351,19 +523,26 @@ $("reset").onclick = ()=>{
   if(confirm("确定要清空全部学习进度吗？此操作无法撤销。")){
     known.clear();
     saveKnown();
-    render();
+    filter();
   }
 };
+$("knownlist").onclick = ()=>{ renderKnownList(); $("modalOverlay").classList.add("show"); };
+$("modalClose").onclick = ()=> $("modalOverlay").classList.remove("show");
+$("modalOverlay").onclick = e=>{ if(e.target.id==="modalOverlay") $("modalOverlay").classList.remove("show"); };
 
 document.addEventListener("keydown", e=>{
+  if($("modalOverlay").classList.contains("show")){
+    if(e.key==="Escape") $("modalOverlay").classList.remove("show");
+    return;
+  }
   if(e.key===" "){ e.preventDefault(); card.classList.toggle("flip"); }
   if(e.key==="ArrowRight") go(1);
   if(e.key==="ArrowLeft") go(-1);
-  if(e.key==="1"){ known.delete(view[idx].id); saveKnown(); go(1); }
-  if(e.key==="2"){ known.add(view[idx].id); saveKnown(); go(1); }
+  if(e.key==="1"){ go(1); }
+  if(e.key==="2"){ markKnown(); }
 });
 
-cats(); render();
+cats(); filter();
 </script>
 </body>
 </html>
