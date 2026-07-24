@@ -213,6 +213,16 @@
   }
   .known-item button:hover { background: var(--clove); color: #fff; }
 
+  .sync-hint { font-size: 13px; color: var(--mute); line-height: 1.6; margin-bottom: 14px; }
+  .sync-input {
+    width: 100%; padding: 11px 12px; font-family: 'JetBrains Mono', monospace;
+    font-size: 14px; border: 1.5px solid var(--ink); border-radius: 4px;
+    background: #fffdf7; color: var(--ink); margin-bottom: 12px;
+  }
+  .sync-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+  .sync-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+  .sync-state { font-size: 12px; color: var(--mute); text-align: center; min-height: 16px; }
+
   @media (prefers-reduced-motion: reduce) {
     .card { transition: none; }
     .btn:hover { transform: none; }
@@ -259,6 +269,7 @@
   <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
   <div class="tools-row">
     <button class="reset-btn" id="knownlist">已掌握列表 (<span id="knownCount">0</span>)</button>
+    <button class="reset-btn" id="syncBtn">同步：<span id="syncStatus">未设置</span></button>
     <button class="reset-btn" id="reset">清空进度</button>
   </div>
 </div>
@@ -273,7 +284,39 @@
   </div>
 </div>
 
-<script>
+<div class="modal-overlay" id="syncModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>跨设备同步</h2>
+      <button class="modal-close" id="syncModalClose" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="sync-hint">在电脑和手机上都填一样的同步码，两边的学习进度就会自动同步。第一次连接会把这台设备和云端已有的进度合并到一起。</p>
+      <input type="text" id="syncCodeInput" class="sync-input" placeholder="自己起一个同步码，比如生日或暗号" autocomplete="off">
+      <div class="sync-actions">
+        <button class="btn know" id="syncSaveBtn">保存并同步</button>
+        <button class="btn ghost" id="syncDisconnectBtn">断开同步</button>
+      </div>
+      <p class="sync-state" id="syncState"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqL_KE6biXwcf_5KZ1i8xj3SCuZRXWppo",
+  authDomain: "kartu-kosakata.firebaseapp.com",
+  projectId: "kartu-kosakata",
+  storageBucket: "kartu-kosakata.firebasestorage.app",
+  messagingSenderId: "225549718799",
+  appId: "1:225549718799:web:8bcd08f4cdb65843a8da7a"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
 const DATA = [
  {w:"musik",p:"mu-sik 木-西克",zh:"音乐",c:"教会",root:"外来词（荷 muziek）",coll:"mendengarkan musik 听音乐 / alat musik 乐器 / musik rohani 灵修音乐",syn:"lagu = 一首首的歌曲；musik = 音乐整体",ex:"Saya suka mendengarkan musik rohani.|我喜欢听灵修音乐。"},
  {w:"lalu",p:"la-lu 拉-鲁",zh:"上一个 / 然后",c:"语法",root:"lalu（经过、过去）",coll:"minggu lalu 上周 / dua hari yang lalu 两天前 / A, lalu B 然后",syn:"跟时间词后=「上/前」；连接两动作=「然后」。近义 kemudian（书面）、terus（口语）",ex:"Minggu lalu saya sakit, lalu minggu ini sudah sembuh.|上周我生病了，然后这周已经痊愈了。"},
@@ -419,6 +462,7 @@ let view = deck.slice();
 let idx = 0;
 
 const STORAGE_KEY = "kosakata-known";
+const SYNC_CODE_KEY = "kosakata-sync-code";
 function loadKnown(){
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -427,9 +471,72 @@ function loadKnown(){
 }
 function saveKnown(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...known])); } catch(e){}
+  pushKnownToRemote();
 }
 let known = loadKnown();
 let cat = "全部";
+
+let syncRef = null;
+let unsubscribeSync = null;
+let applyingRemote = false;
+
+function pushKnownToRemote(){
+  if(!syncRef || applyingRemote) return;
+  setDoc(syncRef, { known: [...known] }).catch(()=>{
+    setSyncState("推送失败，检查网络后会自动重试。");
+  });
+}
+
+function setSyncState(msg){
+  const el = document.getElementById("syncState");
+  if(el) el.textContent = msg || "";
+}
+
+async function connectSync(code){
+  code = code.trim();
+  if(unsubscribeSync){ unsubscribeSync(); unsubscribeSync = null; }
+  if(!code){ disconnectSync(); return; }
+  localStorage.setItem(SYNC_CODE_KEY, code);
+  syncRef = doc(db, "progress", code);
+  $("syncStatus").textContent = "连接中…";
+  setSyncState("正在连接并合并进度…");
+  try {
+    const snap = await getDoc(syncRef);
+    const remoteIds = snap.exists() ? (snap.data().known || []) : [];
+    remoteIds.forEach(id => known.add(id));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...known]));
+    await setDoc(syncRef, { known: [...known] });
+    filter();
+    $("knownCount").textContent = known.size;
+    $("syncStatus").textContent = "已连接";
+    setSyncState(`已连接，同步码：${code}`);
+    unsubscribeSync = onSnapshot(syncRef, snap=>{
+      if(snap.metadata.hasPendingWrites) return;
+      const data = snap.data();
+      if(!data) return;
+      applyingRemote = true;
+      known = new Set(data.known || []);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...known]));
+      applyingRemote = false;
+      filter();
+      if($("modalOverlay").classList.contains("show")) renderKnownList();
+    }, ()=>{
+      $("syncStatus").textContent = "连接失败";
+      setSyncState("同步连接失败，请检查网络或稍后重试。");
+    });
+  } catch(e){
+    $("syncStatus").textContent = "连接失败";
+    setSyncState("同步连接失败，请检查网络或稍后重试。");
+  }
+}
+
+function disconnectSync(){
+  if(unsubscribeSync){ unsubscribeSync(); unsubscribeSync = null; }
+  syncRef = null;
+  localStorage.removeItem(SYNC_CODE_KEY);
+  $("syncStatus").textContent = "未设置";
+  setSyncState("已断开同步，进度仍保存在本设备。");
+}
 
 const $ = id => document.getElementById(id);
 const card = $("card");
@@ -530,7 +637,21 @@ $("knownlist").onclick = ()=>{ renderKnownList(); $("modalOverlay").classList.ad
 $("modalClose").onclick = ()=> $("modalOverlay").classList.remove("show");
 $("modalOverlay").onclick = e=>{ if(e.target.id==="modalOverlay") $("modalOverlay").classList.remove("show"); };
 
+$("syncBtn").onclick = ()=>{
+  $("syncCodeInput").value = localStorage.getItem(SYNC_CODE_KEY) || "";
+  setSyncState(syncRef ? `已连接，同步码：${localStorage.getItem(SYNC_CODE_KEY)}` : "");
+  $("syncModalOverlay").classList.add("show");
+};
+$("syncModalClose").onclick = ()=> $("syncModalOverlay").classList.remove("show");
+$("syncModalOverlay").onclick = e=>{ if(e.target.id==="syncModalOverlay") $("syncModalOverlay").classList.remove("show"); };
+$("syncSaveBtn").onclick = ()=> connectSync($("syncCodeInput").value);
+$("syncDisconnectBtn").onclick = ()=>{ disconnectSync(); $("syncCodeInput").value = ""; };
+
 document.addEventListener("keydown", e=>{
+  if($("syncModalOverlay").classList.contains("show")){
+    if(e.key==="Escape") $("syncModalOverlay").classList.remove("show");
+    return;
+  }
   if($("modalOverlay").classList.contains("show")){
     if(e.key==="Escape") $("modalOverlay").classList.remove("show");
     return;
@@ -543,6 +664,8 @@ document.addEventListener("keydown", e=>{
 });
 
 cats(); filter();
+const savedSyncCode = localStorage.getItem(SYNC_CODE_KEY);
+if(savedSyncCode) connectSync(savedSyncCode);
 </script>
 </body>
 </html>
