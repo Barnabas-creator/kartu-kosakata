@@ -240,6 +240,7 @@
     <div class="sub" id="deckname">词库 · 本对话</div>
   </div>
 
+  <div class="controls" id="types"></div>
   <div class="controls" id="cats"></div>
 
   <div class="meter">
@@ -635,6 +636,7 @@ function saveKnown(){
 }
 let known = loadKnown();
 let cat = "全部";
+let type = "全部";
 
 let syncRef = null;
 let unsubscribeSync = null;
@@ -701,18 +703,36 @@ function disconnectSync(){
 const $ = id => document.getElementById(id);
 const card = $("card");
 
+const TYPE_LABEL = { "全部":"全部", "root":"词根", "phrase":"词组" };
+
+function inType(d){ return type === "全部" || d.t === type; }
+function inCat(d){ return cat === "全部" || d.c === cat; }
+
+function types(){
+  const pool = DATA.filter(inCat);
+  $("types").innerHTML = ["全部","root","phrase"].map(k=>{
+    const n = k === "全部" ? pool.length : pool.filter(d=>d.t===k).length;
+    return `<button class="chip ${k===type?'on':''}" data-t="${k}">${TYPE_LABEL[k]} ${n}</button>`;
+  }).join("");
+  $("types").querySelectorAll(".chip").forEach(b=>{
+    b.onclick = ()=>{ type = b.dataset.t; filter(); types(); cats(); };
+  });
+}
+
 function cats(){
+  const pool = DATA.filter(inType);
   const set = ["全部", ...new Set(DATA.map(d=>d.c))];
-  $("cats").innerHTML = set.map(c=>
-    `<button class="chip ${c===cat?'on':''}" data-c="${c}">${c} ${c==='全部'?DATA.length:DATA.filter(d=>d.c===c).length}</button>`
-  ).join("");
+  $("cats").innerHTML = set.map(c=>{
+    const n = c === "全部" ? pool.length : pool.filter(d=>d.c===c).length;
+    return `<button class="chip ${c===cat?'on':''}" data-c="${c}">${c} ${n}</button>`;
+  }).join("");
   $("cats").querySelectorAll(".chip").forEach(b=>{
-    b.onclick = ()=>{ cat=b.dataset.c; filter(); cats(); };
+    b.onclick = ()=>{ cat = b.dataset.c; filter(); cats(); types(); };
   });
 }
 
 function filter(){
-  view = deck.filter(d => (cat==="全部" || d.c===cat) && !known.has(d.id));
+  view = deck.filter(d => inCat(d) && inType(d) && !known.has(d.id));
   idx = 0; render();
 }
 
@@ -721,8 +741,9 @@ function render(){
   $("score").textContent = `已掌握 ${known.size}`;
   if(!view.length){
     card.classList.remove("flip");
-    $("tagF").textContent = cat;
-    $("tagB").textContent = cat;
+    const scope = type === "全部" ? cat : `${TYPE_LABEL[type]} · ${cat}`;
+    $("tagF").textContent = scope;
+    $("tagB").textContent = scope;
     $("w").textContent = "🎉";
     $("p").textContent = "";
     $("zh").textContent = "这个分类的词你都记住了！";
@@ -828,7 +849,7 @@ document.addEventListener("keydown", e=>{
   if(e.key==="2"){ markKnown(); }
 });
 
-cats(); filter();
+types(); cats(); filter();
 const savedSyncCode = localStorage.getItem(SYNC_CODE_KEY);
 if(savedSyncCode) connectSync(savedSyncCode);
 </script>
