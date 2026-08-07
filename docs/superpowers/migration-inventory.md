@@ -62,7 +62,7 @@
 | 28 | sejak | 高频 | 新建词根卡 | sejak | 介词 | — | — |
 | 29 | begini | 口语 | 新建词根卡 | begini | 副词 | — | kalau begitu |
 | 30 | bareng | 口语 | 新建词根卡 | bareng | 副词 | barengan（一块儿） | — |
-| 31 | yuk | 口语 | 新建词根卡 | yuk | 副词（语气词） | — | — |
+| 31 | yuk | 口语 | 新建词根卡 | yuk | 副词 | — | — |
 | 32 | urutan | 高频 | 并入 urut | urut（补建） | — | — | — |
 | 33 | revisi | 工作 | 新建词根卡 | revisi | 名词 | merevisi（修订） | — |
 | 34 | berharap | 词缀 | 并入 harap | harap（补建） | — | — | — |
@@ -104,7 +104,7 @@
 | 70 | polsek | 生活 | 新建词根卡 | polsek | 名词 | —（缩写词） | — |
 | 71 | ada apa | 口语 | 新建词组卡 | ada apa | — | — | — |
 | 72 | apa saja | 口语 | 新建词组卡 | apa saja | — | — | — |
-| 73 | toh | 口语 | 新建词根卡 | toh | 副词（语气词） | — | — |
+| 73 | toh | 口语 | 新建词根卡 | toh | 副词 | — | — |
 | 74 | gak usah | 口语 | 新建词组卡 | gak usah | — | — | — |
 | 75 | seandainya | 语法 | 并入 andai | andai（补建） | — | — | — |
 | 76 | kebahagiaan | 词缀 | 并入 bahagia | bahagia（补建） | — | — | — |
@@ -218,20 +218,20 @@
 | 184 | memperbaharui | 工作 | 并入 baru | baru（补建） | — | — | — |
 | 185 | menemui | 动作 | 并入 temu | temu（补建） | — | — | jalan buntu |
 | 186 | sesat | 教会 | 新建词根卡 | sesat | 形容词 | tersesat（迷路）/ menyesatkan（使人走迷） | ajaran sesat |
-| 187 | demikian | 语法 | 新建词根卡 | demikian | 副词 | — | dengan demikian |
+| 187 | demikian | 语法 | 新建词根卡 | demikian | 副词 | — | dengan demikian / sedemikian rupa |
 | 188 | cemar | 形容词 | 新建词根卡 | cemar | 形容词 | tercemar（被污染的）/ mencemari（污染…）（落选：pencemaran 污染、dicemari 被玷污，降级到 syn） | — |
 | 189 | macam | 高频 | 新建词根卡 | macam | 名词 | bermacam-macam（各式各样）/ semacam（一种、类似于） | jangan macam-macam |
 | 190 | serakah | 形容词 | 新建词根卡 | serakah | 形容词 | keserakahan（贪婪、贪欲）/ menyerakahi（独吞、侵占） | — |
 | 191 | menyerakahi | 动作 | 并入 serakah | serakah（#190） | — | — | — |
 | 192 | keserakahan | 教会 | 并入 serakah | serakah（#190） | — | — | — |
 | 193 | hawa nafsu | 教会 | 新建词组卡 | hawa nafsu | — | — | — |
-| 194 | nafsu | 高频 | 新建词根卡 | nafsu | 名词 | bernafsu（充满欲望的、渴望的） | nafsu makan |
+| 194 | nafsu | 高频 | 新建词根卡 | nafsu | 名词 | bernafsu（充满欲望的、渴望的）（落选：menafsukan 非规范用法，降级到 syn） | nafsu makan |
 | 195 | bernafsu | 形容词 | 并入 nafsu | nafsu（#194） | — | — | — |
 | 196 | menafsukan | 辨音 | 并入 nafsu | nafsu（#194） | — | — | menggugah selera |
 | 197 | terbuai | 高频 | 并入 buai | buai（补建） | — | — | hawa nafsu（已由 #193 立） |
 | 198 | mengendalikan | 动作 | 并入 kendali | kendali（#128） | — | — | hawa nafsu（已由 #193 立） |
 | 199 | pembawaan | 形容词 | 并入 bawa | bawa（补建） | — | — | terbawa suasana |
-| 200 | tumpul | 形容词 | 新建词根卡 | tumpul | 形容词 | menumpulkan（使变钝） | — |
+| 200 | tumpul | 形容词 | 新建词根卡 | tumpul | 形容词 | menumpulkan（使变钝）（落选：tumpel 方言变体，降级到 syn） | — |
 | 201 | tumpel | 口语 | 并入 tumpul | tumpul（#200） | — | — | — |
 | 202 | bodoh | 形容词 | 新建词根卡 | bodoh | 形容词 | membodohi（愚弄别人）/ kebodohan（愚蠢） | masa bodoh |
 | 203 | kesempatan | 高频 | 并入 sempat | sempat（补建） | — | — | — |
@@ -405,14 +405,15 @@
 
 ## 抽出的词组卡汇总
 
-从 `coll` 抽出的 38 张：
+从 `coll` 抽出的 39 张：
 
 alat musik / musik rohani / minggu lalu / satu demi satu / hari demi hari /
 Khotbah di Bukit / air terjun / terjun payung / jurang pemisah / mati lemas /
 gempa bumi / Sepuluh Perintah Allah / masuk angin / keinginan daging /
 di samping itu / badan usaha / oleh sebab itu / serangan jantung / aman terkendali /
 korban jiwa / apa kabar / bahan baku / saksi dusta / jalan buntu / ajaran sesat /
-dengan demikian / nafsu makan / masa bodoh / anggota tubuh / tipu daya /
+dengan demikian / sedemikian rupa / nafsu makan / masa bodoh / anggota tubuh /
+tipu daya /
 menjinakkan bom / faktur pajak / ganti rugi / menyangkal diri / memikul salib /
 Pengakuan Iman Rasuli / menderita sengsara / terlebih dahulu
 
@@ -445,5 +446,5 @@ tanggung jawab / terlebih lagi
   - 新建词组卡：18
   - 丢弃：0
 - 词根卡：232（原卡转成的 143 + 补建的 89）
-- 词组卡：78（原卡转成的 18 + 从 coll 抽出的 38 + 从 syn 抽出的 22）
-- 合计：310
+- 词组卡：79（原卡转成的 18 + 从 coll 抽出的 39 + 从 syn 抽出的 22）
+- 合计：311
