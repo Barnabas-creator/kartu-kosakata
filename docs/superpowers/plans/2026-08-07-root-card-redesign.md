@@ -356,7 +356,7 @@ Expected: 271 行，制表符分隔，字段依次是 序号 / 词形 / 分类 /
 1. 词形带 `me-/meN-`、`ber-`、`pe-/peN-`、`-an`、`-kan`、`-i`、`se-`、`ter-`、`-lah` 且去掉词缀后是一个真词根 → `并入 <词根>`。已知的：`mengatakan→kata`、`menceritakan→cerita`、`pemasok→pasok`、`menghitung→hitung`、`mengusir→usir`、`mengabulkan→kabul`、`sejumlah→jumlah`、`mendesak→desak`、`suruhlah→suruh`。**注意假词缀**：`terjun`、`berat`、`bermain` 里只有后者是真 `ber-`，`terjun` 和 `berat` 是词根本身，原卡 `root` 字段已经标了「ter- 非词缀」这类提示，照它判。
 2. 词形含空格 → `新建词组卡`。
 3. 其余 → `新建词根卡`。
-4. 每条的 `coll` 字段逐项过一遍收录门槛：**整体意思不能由逐词直译推出，或搭配固定到换词就错** → `抽出词组卡`。`mendengarkan musik`（听音乐）这种自由组合不抽；`air terjun`、`gempa bumi`、`berat hati`、`satu demi satu`、`jurang pemisah`、`Khotbah di Bukit` 这种抽。
+4. 每条的 `coll` **和 `syn`** 字段逐项过一遍收录门槛：**整体意思不能由逐词直译推出，或搭配固定到换词就错** → `抽出词组卡`。`syn` 是辨析文字，固定搭配埋在句子里（`surat jalan` 送货单、`dana cair` 款项到账），要读进去挑，不能只看分隔符。`mendengarkan musik`（听音乐）这种自由组合不抽；`air terjun`、`gempa bumi`、`berat hati`、`satu demi satu`、`jurang pemisah`、`Khotbah di Bukit` 这种抽。
 5. 多条派生词卡指向同一词根时，「拟选 der」列在**词根那一行**填最终选中的 1~2 个，落选的在该行备注「落选：xxx（降级到 syn）」。
 6. 词组卡的目标词形去重：同一个词组被多张原卡的 coll 提到时，只立一张，后来的那行写 `抽出词组卡：air terjun（已由 #13 立）`。
 
@@ -1246,7 +1246,7 @@ Expected: `writable`
 
 3. **核心规矩：以词根取词，不以派生词取词** — 遇到生词先剥词缀还原到词根（`me-/meN-`、`ber-`、`pe-/peN-`、`-an`、`-kan`、`-i`、`se-`、`ter-`、`-lah`），再查词库里这个词根卡在不在。在 → 考虑要不要用这个新词替换掉现有 `der` 里较弱的一条；不在 → 新建词根卡，把这个生词作为第一条 `der`。**永远不要为一个派生词单独建卡。** 注意假词缀：`terjun`、`berat`、`bertih` 里的 `ter-`/`ber-` 不是词缀，剥错了就查无此根。
 
-4. **词性标注表** — 逐字抄设计文档「词性标注表」一节：`动词根` / `名词` / `形容词` / `副词` / `连词` / `介词` / `数词` / `代词` / `量词`，不单用的加「（不单用）」，外来词照常标词性、`der` 留空。
+4. **词性标注表** — 逐字抄设计文档「词性标注表」一节：`动词根` / `名词` / `形容词` / `副词` / `连词` / `介词` / `数词` / `代词` / `量词` / `词缀`，不单用的加「（不单用）」，外来词照常标词性、`der` 留空。`词缀` 用于卡片教的就是这个词缀本身的情形（`-an（约数）`），这类卡永远带「（不单用）」。
 
 5. **衍生词怎么挑（最多 2 个）** — 逐字抄设计文档的四条判据：①用户实际语境（教会讲道、印尼工厂采购、日常）里频率高的优先；②与词根本义偏离最大的优先，偏离小的能猜出来不值得占位；③优先选不同词缀家族的（一个 `meN-` 动词 + 一个 `pe-/-an` 名词），不要两个都是 `meN-` 系；④已经独立成词、词典单列词条的优先。配一组正反例：`ajar` 选 `mengajar` + `ajaran`（一动一名，`ajaran` 教义偏离最大）而不是 `mengajar` + `mengajarkan`（同一词缀家族，意思几乎重叠）。
 
