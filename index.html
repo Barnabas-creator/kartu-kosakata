@@ -92,13 +92,14 @@
     position: relative;
     width: 100%;
     min-height: 340px;
+    display: grid;
     transform-style: preserve-3d;
     transition: transform .55s cubic-bezier(.2,.8,.25,1);
     cursor: pointer;
   }
   .card.flip { transform: rotateY(180deg); }
   .face {
-    position: absolute; inset: 0;
+    grid-area: 1 / 1;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     background: #fffdf7;
