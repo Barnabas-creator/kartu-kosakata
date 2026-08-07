@@ -143,6 +143,10 @@
   .row i { font-style: normal; }
   .ex { margin-top: 12px; padding: 12px; background: var(--paper); border-left: 3px solid var(--gold); font-size: 14px; line-height: 1.6; }
   .ex em { font-style: italic; color: var(--moss); display: block; margin-bottom: 3px; }
+  .der { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid var(--paper-2); font-size: 14px; line-height: 1.55; }
+  .der .dw { flex: 0 0 104px; font-weight: 600; color: var(--ink); word-break: break-word; }
+  .der .dz { flex: 1; }
+  .der .dx { display: block; margin-top: 3px; font-size: 12.5px; color: var(--moss); }
 
   .nav { display: flex; gap: 8px; }
   .btn {
@@ -317,7 +321,8 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 
-const DATA = [
+// 旧格式词库，迁移期间保留供抄写，全部迁完后删除（见计划 Task 9）
+const OLD = [
  {w:"musik",p:"mu-sik 木-西克",zh:"音乐",c:"教会",root:"外来词（荷 muziek）",coll:"mendengarkan musik 听音乐 / alat musik 乐器 / musik rohani 灵修音乐",syn:"lagu = 一首首的歌曲；musik = 音乐整体",ex:"Saya suka mendengarkan musik rohani.|我喜欢听灵修音乐。"},
  {w:"lalu",p:"la-lu 拉-鲁",zh:"上一个 / 然后",c:"语法",root:"lalu（经过、过去）",coll:"minggu lalu 上周 / dua hari yang lalu 两天前 / A, lalu B 然后",syn:"跟时间词后=「上/前」；连接两动作=「然后」。近义 kemudian（书面）、terus（口语）",ex:"Minggu lalu saya sakit, lalu minggu ini sudah sembuh.|上周我生病了，然后这周已经痊愈了。"},
  {w:"kali terakhir",p:"ka-li te-ra-khir",zh:"上一次",c:"高频",root:"kali 次 + terakhir 最后",coll:"kali ini 这次 / sebelumnya 之前 / setiap kali 每次",syn:"⚠️ 没有「kali lalu」这种说法。lalu 只跟时间段（hari/minggu/bulan/tahun）",ex:"Kali terakhir kita bertemu di gereja.|上一次我们是在教会见面的。"},
@@ -591,11 +596,31 @@ const DATA = [
  {w:"menyelesaikan",p:"me-nye-le-sai-kan 孟-涅-勒-赛-干",zh:"解决、完成",c:"高频",root:"selesai 完成 + meny-…-kan（s 脱落）",coll:"menyelesaikan masalah 解决问题 / penyelesaian 解决方案 / sudah selesai 已完成",syn:"mengatasi 克服（战胜困难）；memecahkan 攻克（解难题）；mendamaikan 使和好",ex:"Kita harus menyelesaikan masalah ini bersama.|我们要一起解决这个问题。"},
 ];
 
-let deck = DATA.map((d,i)=>({...d,id:i}));
+const DATA = [
+ {t:"root",w:"ajar",pos:"动词根（不单用）",p:"a-jar 阿-乍",zh:"教导",c:"学习",
+  der:[{w:"mengajar",zh:"教、授课",ex:"mengajar di sekolah 在学校教书"},
+       {w:"ajaran",zh:"教义、道理",ex:"ajaran sesat 异端"}],
+  syn:"belajar 学 / mengajar 教，一根两向；pelajar 学生 / pengajar 教师；pelajaran 功课 / pengajaran 教导这件事",
+  ex:"Yesus mengajar orang banyak.|耶稣教导众人。"},
+ {t:"root",w:"musik",pos:"名词",p:"mu-sik 木-西克",zh:"音乐",c:"教会",
+  der:[],
+  syn:"外来词（荷 muziek），不参与印尼语派生。lagu = 一首首的歌曲；musik = 音乐整体",
+  ex:"Saya suka mendengarkan musik rohani.|我喜欢听灵修音乐。"},
+ {t:"phrase",w:"air terjun",p:"a-ir ter-jun",zh:"瀑布",c:"地形",
+  lit:"air 水 + terjun 跳下",
+  note:"固定组合，不说 air jatuh；terjun 单用是「跳下、投身」",
+  ex:"Kami pergi melihat air terjun.|我们去看瀑布。"},
+];
+
+function cardId(d){
+  const slug = String(d.w).trim().toLowerCase().replace(/\s+/g, "-");
+  return d.n ? `${d.t}:${slug}-${d.n}` : `${d.t}:${slug}`;
+}
+let deck = DATA.map(d=>({...d, id: cardId(d)}));
 let view = deck.slice();
 let idx = 0;
 
-const STORAGE_KEY = "kosakata-known";
+const STORAGE_KEY = "kosakata-known-v2";
 const SYNC_CODE_KEY = "kosakata-sync-code";
 function loadKnown(){
   try {
@@ -713,11 +738,16 @@ function render(){
   $("tagB").textContent = d.c;
   $("zh").textContent = d.zh;
   const [ind, chn] = d.ex.split("|");
-  $("detail").innerHTML =
-    `<div class="row"><b>词根</b><i>${d.root}</i></div>` +
-    `<div class="row"><b>搭配</b><i>${d.coll}</i></div>` +
-    `<div class="row"><b>辨析</b><i>${d.syn}</i></div>` +
-    `<div class="ex"><em>${ind}</em>${chn}</div>`;
+  const row = (label, val) => `<div class="row"><b>${label}</b><i>${val}</i></div>`;
+  const exBlock = `<div class="ex"><em>${ind}</em>${chn}</div>`;
+  $("detail").innerHTML = d.t === "phrase"
+    ? row("直译", d.lit) + (d.note ? row("提示", d.note) : "") + exBlock
+    : row("词性", d.pos)
+      + (d.der || []).map(x =>
+          `<div class="der"><span class="dw">${x.w}</span><span class="dz">${x.zh}<span class="dx">${x.ex}</span></span></div>`
+        ).join("")
+      + (d.syn ? row("辨析", d.syn) : "")
+      + exBlock;
   $("pos").textContent = `${idx+1} / ${view.length}`;
   $("fill").style.width = `${(idx+1)/view.length*100}%`;
 }
@@ -744,7 +774,7 @@ function renderKnownList(){
     : `<p class="empty-hint">还没有已掌握的词。</p>`;
   $("knownListBody").querySelectorAll("button[data-id]").forEach(b=>{
     b.onclick = ()=>{
-      known.delete(Number(b.dataset.id));
+      known.delete(b.dataset.id);
       saveKnown();
       renderKnownList();
       filter();
