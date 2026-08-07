@@ -173,7 +173,7 @@ test("validateDeck 对干净词库返回空数组", () => {
 
 - [ ] **Step 2: 跑测试确认失败**
 
-Run: `node --test tools/`
+Run: `node --test tools/*.test.mjs`
 Expected: FAIL，报 `Cannot find module .../tools/check-data.mjs`
 
 - [ ] **Step 3: 写实现**
@@ -277,7 +277,7 @@ if (import.meta.filename === process.argv[1]) {
 
 - [ ] **Step 4: 跑测试确认通过**
 
-Run: `node --test tools/`
+Run: `node --test tools/*.test.mjs`
 Expected: PASS，19 个 test 全绿
 
 - [ ] **Step 5: 确认 CLI 能跑起来并对当前旧词库报错**
@@ -550,7 +550,7 @@ function render(){
 Run: `node tools/check-data.mjs`
 Expected: `OK：3 张卡片全部通过校验`
 
-Run: `node --test tools/`
+Run: `node --test tools/*.test.mjs`
 Expected: PASS，19 个 test 全绿（校验脚本本身没动，确认没被连带改坏）
 
 - [ ] **Step 6: 浏览器手测**
@@ -694,7 +694,7 @@ types(); cats(); filter();
 
 - [ ] **Step 6: 跑校验**
 
-Run: `node tools/check-data.mjs && node --test tools/`
+Run: `node tools/check-data.mjs && node --test tools/*.test.mjs`
 Expected: `OK：3 张卡片全部通过校验`，随后 19 个 test 全绿
 
 - [ ] **Step 7: 浏览器手测**
@@ -1187,7 +1187,7 @@ Expected: 张数与 Step 3 相同（删 `OLD` 不该影响 `DATA`）
 
 ```bash
 node tools/check-data.mjs
-node --test tools/
+node --test tools/*.test.mjs
 ```
 ```
 
