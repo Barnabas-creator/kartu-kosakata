@@ -193,7 +193,7 @@
 | 159 | libat | 高频 | 新建词根卡 | libat | 动词根（不单用） | terlibat（卷入、参与）/ melibatkan（使…参与）（落选：keterlibatan 参与度，降级到 syn） | — |
 | 160 | musnah | 教会 | 新建词根卡 | musnah | 动词根 | memusnahkan（消灭）/ kemusnahan（毁灭） | — |
 | 161 | paksa | 高频 | 新建词根卡 | paksa | 动词根 | terpaksa（被迫）/ memaksa（强迫）（落选：paksaan 强迫，降级到 syn） | — |
-| 162 | soalnya | 口语 | 并入 soal | soal（补建） | — | — | — |
+| 162 | soalnya | 口语 | 并入 soal | soal（补建）（已由批次 2 建） | — | — | — |
 | 163 | surat tugas | 工作 | 新建词组卡 | surat tugas | — | — | surat jalan |
 | 164 | contohnya | 高频 | 并入 contoh | contoh（补建） | — | — | — |
 | 165 | kedip-kedip | 工作 | 并入 kedip | kedip（补建） | — | — | — |
@@ -215,7 +215,7 @@
 | 181 | materai | 工作 | 新建词根卡 | materai | 名词 | — | — |
 | 182 | tray | 生活 | 新建词根卡 | tray | 名词 | —（外来词） | — |
 | 183 | dusta | 教会 | 新建词根卡 | dusta | 名词 | berdusta（说谎）/ mendustai（欺骗某人） | saksi dusta |
-| 184 | memperbaharui | 工作 | 并入 baru | baru（补建） | — | — | — |
+| 184 | memperbaharui | 工作 | 并入 baru | baru（补建）（已由批次 2 建） | — | — | — |
 | 185 | menemui | 动作 | 并入 temu | temu（补建） | — | — | jalan buntu |
 | 186 | sesat | 教会 | 新建词根卡 | sesat | 形容词 | tersesat（迷路）/ menyesatkan（使人走迷） | ajaran sesat |
 | 187 | demikian | 语法 | 新建词根卡 | demikian | 副词 | — | dengan demikian / sedemikian rupa |
@@ -349,9 +349,9 @@
 | sembunyi | 动词根 | tersembunyi（隐藏的）/ menyembunyikan（把…藏起来） | #94 | 落选：bersembunyi 躲藏（降级到 syn） |
 | capai | 动词根 | mencapai（达到、达成）/ tercapai（得以实现） | #96 | ⚠️ capai 单用＝累，上提到 syn |
 | ikat | 动词根 | mengikat（捆绑、约束）/ ikatan（纽带） | #97 | 落选：terikat 被束缚（降级到 syn） |
-| baru | 形容词 | memperbarui（更新）/ pembaruan（更新，名词） | #98、#184 | 落选：memperbaharui（旧拼法，公文常见，降级到 syn）；#184 的换护照/续合同用例并进 der 的 ex |
+| baru | 形容词 | memperbarui（更新）/ pembaruan（更新，名词） | #98、#184 | 已由批次 2 建。落选：memperbaharui（旧拼法，公文常见，降级到 syn）；#184 的换护照/续合同用例并进 der 的 ex |
 | kenan | 动词根（不单用） | berkenan（乐意、悦纳） | #99 | — |
-| soal | 名词 | persoalan（问题、难题）/ soalnya（因为、原因是） | #100、#162 | — |
+| soal | 名词 | persoalan（问题、难题）/ soalnya（因为、原因是） | #100、#162 | 已由批次 2 建 |
 | genap | 形容词 | segenap（全部的、整个的） | #102 | — |
 | ucap | 动词根（不单用） | mengucapkan（说出、致以）/ ucapan（致辞） | #103 | — |
 | salam | 名词 | bersalaman（互相握手问候） | #104 | ber-…-an 表互相，上提到 syn |
