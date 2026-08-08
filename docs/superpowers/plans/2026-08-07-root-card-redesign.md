@@ -780,6 +780,11 @@ deck so a zero-count category stays clickable."
 Run: `node tools/check-data.mjs`
 Expected: `OK：<3 + 本批张数> 张卡片全部通过校验`
 
+
+校验脚本同时会打印 `提示（不影响通过）：` 一节，列出**例句里既不含卡片本身的词、也不含任何衍生词**的卡。
+提示不影响退出码，但本批不得留下未处理的提示：逐条改写例句让它真的用上那个词。
+若某张确有理由保持原样（例句在教一组辨析），在报告里写明理由。
+
 有报错就照错误信息改，直到通过。常见错误和成因：
 - `残留旧字段 root` — 忘了删原卡的 `root` 字段
 - `der 的 ex 是词组或短例句，不带竖线` — 把整句例句抄进 `der[].ex` 了
@@ -871,6 +876,11 @@ git commit -m "Migrate deck entries 1-55 to root and phrase cards"
 Run: `node tools/check-data.mjs`
 Expected: `OK：<累计张数> 张卡片全部通过校验`
 
+
+校验脚本同时会打印 `提示（不影响通过）：` 一节，列出**例句里既不含卡片本身的词、也不含任何衍生词**的卡。
+提示不影响退出码，但本批不得留下未处理的提示：逐条改写例句让它真的用上那个词。
+若某张确有理由保持原样（例句在教一组辨析），在报告里写明理由。
+
 - [ ] **Step 4: 对照清册核数**
 
 Run:
@@ -953,6 +963,11 @@ git commit -m "Migrate deck entries 56-110 to root and phrase cards"
 Run: `node tools/check-data.mjs`
 Expected: `OK：<累计张数> 张卡片全部通过校验`
 
+
+校验脚本同时会打印 `提示（不影响通过）：` 一节，列出**例句里既不含卡片本身的词、也不含任何衍生词**的卡。
+提示不影响退出码，但本批不得留下未处理的提示：逐条改写例句让它真的用上那个词。
+若某张确有理由保持原样（例句在教一组辨析），在报告里写明理由。
+
 - [ ] **Step 4: 对照清册核数**
 
 Run:
@@ -1034,6 +1049,11 @@ git commit -m "Migrate deck entries 111-165 to root and phrase cards"
 
 Run: `node tools/check-data.mjs`
 Expected: `OK：<累计张数> 张卡片全部通过校验`
+
+
+校验脚本同时会打印 `提示（不影响通过）：` 一节，列出**例句里既不含卡片本身的词、也不含任何衍生词**的卡。
+提示不影响退出码，但本批不得留下未处理的提示：逐条改写例句让它真的用上那个词。
+若某张确有理由保持原样（例句在教一组辨析），在报告里写明理由。
 
 - [ ] **Step 4: 对照清册核数**
 
@@ -1119,6 +1139,11 @@ git commit -m "Migrate deck entries 166-220 to root and phrase cards"
 
 Run: `node tools/check-data.mjs`
 Expected: `OK：<全部张数> 张卡片全部通过校验`
+
+
+校验脚本同时会打印 `提示（不影响通过）：` 一节，列出**例句里既不含卡片本身的词、也不含任何衍生词**的卡。
+提示不影响退出码，但本批不得留下未处理的提示：逐条改写例句让它真的用上那个词。
+若某张确有理由保持原样（例句在教一组辨析），在报告里写明理由。
 
 Run:
 
