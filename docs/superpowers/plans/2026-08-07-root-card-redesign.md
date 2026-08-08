@@ -752,11 +752,11 @@ deck so a zero-count category stays clickable."
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个，每条的 `zh` 从对应派生词原卡的 `zh` 来（若那张原卡在别的批次，照清册记的写，不要等），`ex` 从对应原卡的 `coll` 里挑一条最典型的词组；`syn` 由原卡 `syn` 加上落选衍生词的一句话说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 字段**不写进新卡**。
 
 ```js
- {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
-  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 塞-萨特",zh:"迷失的、误入歧途的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di jalan 迷路"},
        {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
-  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
-  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
+  syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
+  ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
 **`并入 X`** — 本批**不产出卡片**，内容已经进了词根 X 的 `der`。若 X 属于后面的批次，在本批的提交说明里记一句，别重复建卡。
@@ -854,11 +854,11 @@ git commit -m "Migrate deck entries 1-55 to root and phrase cards"
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加上落选衍生词的说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 字段不写进新卡。
 
 ```js
- {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
-  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 塞-萨特",zh:"迷失的、误入歧途的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di jalan 迷路"},
        {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
-  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
-  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
+  syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
+  ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
 **`并入 X`** — 本批不产出卡片，内容已经进了词根 X 的 `der`。
@@ -947,11 +947,11 @@ git commit -m "Migrate deck entries 56-110 to root and phrase cards"
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
-  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 塞-萨特",zh:"迷失的、误入歧途的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di jalan 迷路"},
        {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
-  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
-  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
+  syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
+  ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
@@ -1040,11 +1040,11 @@ git commit -m "Migrate deck entries 111-165 to root and phrase cards"
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
-  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 塞-萨特",zh:"迷失的、误入歧途的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di jalan 迷路"},
        {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
-  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
-  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
+  syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
+  ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
@@ -1136,11 +1136,11 @@ git commit -m "Migrate deck entries 166-220 to root and phrase cards"
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
-  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 塞-萨特",zh:"迷失的、误入歧途的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di jalan 迷路"},
        {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
-  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
-  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
+  syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
+  ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
