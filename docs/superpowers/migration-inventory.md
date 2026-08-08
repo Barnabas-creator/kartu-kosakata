@@ -37,7 +37,7 @@
 | 3 | kali terakhir | 高频 | 新建词组卡 | kali terakhir | — | — | — |
 | 4 | diam | 高频 | 新建词根卡 | diam | 动词根 | berdiam（居留、静处） | — |
 | 5 | demi | 正式 | 新建词根卡 | demi | 介词 | — | satu demi satu / hari demi hari |
-| 6 | mengatakan | 词缀 | 并入 kata | kata（补建） | — | — | — |
+| 6 | mengatakan | 高频 | 并入 kata | kata（补建） | — | — | — |
 | 7 | mengusir | 教会 | 并入 usir | usir（补建） | — | — | — |
 | 8 | lereng | 地形 | 新建词根卡 | lereng | 名词 | — | — |
 | 9 | bukit | 地形 | 新建词根卡 | bukit | 名词 | — | Khotbah di Bukit |
@@ -65,9 +65,9 @@
 | 31 | yuk | 口语 | 新建词根卡 | yuk | 副词 | — | — |
 | 32 | urutan | 高频 | 并入 urut | urut（补建） | — | — | — |
 | 33 | revisi | 工作 | 新建词根卡 | revisi | 名词 | merevisi（修订） | — |
-| 34 | berharap | 词缀 | 并入 harap | harap（补建） | — | — | — |
+| 34 | berharap | 教会 | 并入 harap | harap（补建） | — | — | — |
 | 35 | mendoakan | 教会 | 并入 doa | doa（补建） | — | — | — |
-| 36 | melompat | 词缀 | 并入 lompat | lompat（补建） | — | — | — |
+| 36 | melompat | 动作 | 并入 lompat | lompat（补建） | — | — | — |
 | 37 | menyanyikan | 教会 | 并入 nyanyi | nyanyi（补建） | — | — | — |
 | 38 | Bapa | 教会 | 新建词根卡 | Bapa | 名词 | — | — |
 | 39 | tebu | 生活 | 新建词根卡 | tebu | 名词 | — | — |
@@ -90,7 +90,7 @@
 | 56 | bait | 教会 | 新建词根卡 | bait | 名词 | — | — |
 | 57 | himne | 教会 | 新建词根卡 | himne | 名词 | —（外来词） | — |
 | 58 | poster | 工作 | 新建词根卡 | poster | 名词 | —（外来词） | warta jemaat |
-| 59 | disebarkan | 词缀 | 并入 sebar | sebar（补建） | — | — | — |
+| 59 | disebarkan | 动作 | 并入 sebar | sebar（补建） | — | — | — |
 | 60 | buku harian | 学习 | 新建词组卡 | buku harian | — | — | — |
 | 61 | penutupan | 教会 | 并入 tutup | tutup（补建） | — | — | — |
 | 62 | berat hati | 高频 | 新建词组卡 | berat hati | — | — | — |
@@ -107,7 +107,7 @@
 | 73 | toh | 口语 | 新建词根卡 | toh | 副词 | — | — |
 | 74 | gak usah | 口语 | 新建词组卡 | gak usah | — | — | — |
 | 75 | seandainya | 语法 | 并入 andai | andai（补建） | — | — | — |
-| 76 | kebahagiaan | 词缀 | 并入 bahagia | bahagia（补建） | — | — | — |
+| 76 | kebahagiaan | 形容词 | 并入 bahagia | bahagia（补建） | — | — | — |
 | 77 | yaitu | 语法 | 新建词根卡 | yaitu | 连词 | — | — |
 | 78 | tadi | 高频 | 新建词根卡 | tadi | 副词 | — | — |
 | 79 | salah paham | 高频 | 新建词组卡 | salah paham | — | — | — |
@@ -125,11 +125,11 @@
 | 91 | memberitakan | 教会 | 并入 berita | berita（补建） | — | — | — |
 | 92 | menular | 身体 | 并入 tular | tular（补建） | — | — | — |
 | 93 | ditolak | 高频 | 并入 tolak | tolak（补建） | — | — | — |
-| 94 | tersembunyi | 词缀 | 并入 sembunyi | sembunyi（补建） | — | — | — |
+| 94 | tersembunyi | 教会 | 并入 sembunyi | sembunyi（补建） | — | — | — |
 | 95 | malah | 口语 | 新建词根卡 | malah | 副词 | — | — |
 | 96 | mencapai | 高频 | 并入 capai | capai（补建） | — | — | — |
 | 97 | mengikat | 动作 | 并入 ikat | ikat（补建） | — | — | — |
-| 98 | memperbarui | 词缀 | 并入 baru | baru（补建） | — | — | — |
+| 98 | memperbarui | 高频 | 并入 baru | baru（补建） | — | — | — |
 | 99 | berkenan | 教会 | 并入 kenan | kenan（补建） | — | — | — |
 | 100 | persoalan | 高频 | 并入 soal | soal（补建） | — | — | — |
 | 101 | pemerintahan | 正式 | 并入 perintah | perintah（#48） | — | — | — |
@@ -141,11 +141,11 @@
 | 107 | beranda | 生活 | 新建词根卡 | beranda | 名词 | — | — |
 | 108 | badan | 身体 | 新建词根卡 | badan | 名词 | — | badan usaha |
 | 109 | tunjukkan | 高频 | 并入 tunjuk | tunjuk（补建） | — | — | — |
-| 110 | terbiasa | 词缀 | 并入 biasa | biasa（补建） | — | — | — |
+| 110 | terbiasa | 高频 | 并入 biasa | biasa（补建） | — | — | — |
 | 111 | alasan | 高频 | 并入 alas | alas（补建） | — | — | — |
 | 112 | sesuatu | 高频 | 并入 suatu | suatu（补建） | — | — | — |
 | 113 | sebab | 语法 | 新建词根卡 | sebab | 连词 | — | oleh sebab itu / oleh karena itu |
-| 114 | dibentuk | 词缀 | 并入 bentuk | bentuk（补建） | — | — | — |
+| 114 | dibentuk | 教会 | 并入 bentuk | bentuk（补建） | — | — | — |
 | 115 | cerita | 高频 | 新建词根卡 | cerita | 名词 | menceritakan（讲述、叙述）/ bercerita（讲故事） | panjang ceritanya |
 | 116 | melarang | 高频 | 并入 larang | larang（补建） | — | — | — |
 | 117 | membahas | 学习 | 并入 bahas | bahas（补建） | — | — | — |
@@ -295,9 +295,9 @@
 | 261 | bangkit | 教会 | 新建词根卡 | bangkit | 动词根 | membangkitkan（使复活、激起）/ kebangkitan（复活） | — |
 | 262 | pula | 语法 | 新建词根卡 | pula | 副词 | — | — |
 | 263 | nats | 教会 | 新建词根卡 | nats | 名词 | —（外来词） | — |
-| 264 | mengerikan | 词缀 | 并入 ngeri | ngeri（补建） | — | — | takut akan Tuhan |
+| 264 | mengerikan | 形容词 | 并入 ngeri | ngeri（补建） | — | — | takut akan Tuhan |
 | 265 | merupakan | 语法 | 并入 rupa | rupa（补建） | — | — | — |
-| 266 | dihuni | 词缀 | 并入 huni | huni（补建） | — | — | — |
+| 266 | dihuni | 生活 | 并入 huni | huni（补建） | — | — | — |
 | 267 | memberontak | 教会 | 并入 berontak | berontak（补建） | — | — | — |
 | 268 | seberang | 地形 | 新建词根卡 | seberang | 名词 | menyeberang（过马路、横渡）/ penyeberangan（渡口、人行横道） | — |
 | 269 | turut | 高频 | 新建词根卡 | turut | 动词根 | menurut（根据、依照）/ menuruti（迁就、纵容）（落选：berturut-turut 连续地，降级到 syn） | — |
