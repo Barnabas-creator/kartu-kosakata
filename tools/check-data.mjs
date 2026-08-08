@@ -79,6 +79,29 @@ export function validateDeck(cards) {
   return errs;
 }
 
+// 提示：ex 例句里既没出现卡片本身的 w，也没出现任何 der[].w。
+// 只比对 ex 的印尼语半边（竖线前），且大小写不敏感；中文半边不参与匹配。
+// 印尼语词缀构词大多保留词根子串（ajar → mengajar），但 meN- 同化会吞掉词根首辅音
+// （pasok → memasok、sapu → menyapu、kirim → mengirim），这种情况下例句里出现的是
+// 派生词而非词根本身，所以派生词也算数，不必建模同化规则。
+export function lintDeck(cards) {
+  const warnings = [];
+  cards.forEach((card, i) => {
+    if (!card || typeof card.ex !== "string") return;
+    const where = `#${i + 1} ${card?.w ?? "(无 w)"}`;
+    const idHalf = card.ex.split("|")[0].toLowerCase();
+    const w = typeof card.w === "string" ? card.w.toLowerCase() : "";
+    const derWords = Array.isArray(card.der)
+      ? card.der.map(d => (typeof d?.w === "string" ? d.w.toLowerCase() : "")).filter(Boolean)
+      : [];
+    const hit = (w && idHalf.includes(w)) || derWords.some(dw => idHalf.includes(dw));
+    if (!hit) {
+      warnings.push(`${where}：ex 里既没有 ${card.w} 本身，也没有它的派生词`);
+    }
+  });
+  return warnings;
+}
+
 if (import.meta.filename === process.argv[1]) {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   const cards = extractData(html);
@@ -89,4 +112,9 @@ if (import.meta.filename === process.argv[1]) {
     process.exit(1);
   }
   console.log(`OK：${cards.length} 张卡片全部通过校验`);
+  const warnings = lintDeck(cards);
+  if (warnings.length) {
+    console.log(`\n提示（不影响通过）：`);
+    console.log(warnings.join("\n"));
+  }
 }

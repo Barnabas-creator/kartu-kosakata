@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extractData, cardId, validateCard, validateDeck } from "./check-data.mjs";
+import { extractData, cardId, validateCard, validateDeck, lintDeck } from "./check-data.mjs";
 
 const goodRoot = {
   t: "root", w: "ajar", pos: "动词根（不单用）", p: "a-jar 阿-乍",
@@ -118,4 +118,39 @@ test("validateDeck 抓 id 重复", () => {
 
 test("validateDeck 对干净词库返回空数组", () => {
   assert.deepEqual(validateDeck([goodRoot, goodPhrase]), []);
+});
+
+test("lintDeck：ex 含 w 本身不报", () => {
+  const card = { t: "root", w: "ajar", der: [], ex: "Yesus mengajar orang banyak.|耶稣教导众人。" };
+  assert.deepEqual(lintDeck([card]), []);
+});
+
+test("lintDeck：ex 只含 der[].w 也不报（meN- 同化后词根本身不在句中）", () => {
+  const card = {
+    t: "root", w: "pasok",
+    der: [{ w: "memasok", zh: "供应", ex: "memasok bahan baku 供应原料" }],
+    ex: "Pabrik itu memasok kain ke banyak merek lokal.|那家工厂给很多本土品牌供应布料。"
+  };
+  assert.deepEqual(lintDeck([card]), []);
+});
+
+test("lintDeck：ex 既没有 w 也没有 der[].w 时报一条", () => {
+  const card = { t: "root", w: "metode", der: [], ex: "Bagaimana cara berdoa yang benar?|正确祷告的方式是什么？" };
+  const warnings = lintDeck([card]);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /metode/);
+});
+
+test("lintDeck：大小写不敏感匹配", () => {
+  const card = { t: "root", w: "Bapa", der: [], ex: "Bapa kami yang di sorga.|我们在天上的父。" };
+  assert.deepEqual(lintDeck([card]), []);
+  const card2 = { t: "root", w: "bapa", der: [], ex: "BAPA kami yang di sorga.|我们在天上的父。" };
+  assert.deepEqual(lintDeck([card2]), []);
+});
+
+test("lintDeck：只在中文半边出现不算命中，仍要报", () => {
+  const card = { t: "root", w: "metode", der: [], ex: "Bagaimana cara berdoa yang benar?|正确的方法是什么，metode 是什么？" };
+  const warnings = lintDeck([card]);
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /metode/);
 });
