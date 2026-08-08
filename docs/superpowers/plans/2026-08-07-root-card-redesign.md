@@ -861,6 +861,11 @@ git commit -m "Migrate deck entries 1-55 to root and phrase cards"
   ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
+**建完一个跨批次的词根，回头在清册上打标记。** 清册第二张表的「来源原卡」列若列出多个 `#`，
+说明这个词根被不止一批引用。谁先建它，谁就要在清册里给**其余那些行**加 `（已由批次 N 建）`——
+主表对应行和补建表那一行都要加。不打标记，后面的批次读清册会以为它还没建，再建一次就 id 冲突。
+（`pimpin` 的来源是 #131、#214，横跨批次 3 和 4，是现存唯一一个还没落地的这类根。）
+
 **`并入 X`** — 本批不产出卡片，内容已经进了词根 X 的 `der`。
 
 **`新建词组卡`**：
@@ -954,6 +959,11 @@ git commit -m "Migrate deck entries 56-110 to root and phrase cards"
   ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
 
+**建完一个跨批次的词根，回头在清册上打标记。** 清册第二张表的「来源原卡」列若列出多个 `#`，
+说明这个词根被不止一批引用。谁先建它，谁就要在清册里给**其余那些行**加 `（已由批次 N 建）`——
+主表对应行和补建表那一行都要加。不打标记，后面的批次读清册会以为它还没建，再建一次就 id 冲突。
+（`pimpin` 的来源是 #131、#214，横跨批次 3 和 4，是现存唯一一个还没落地的这类根。）
+
 **`并入 X`** — 本批不产出卡片。
 
 **`新建词组卡`**：
@@ -1046,6 +1056,11 @@ git commit -m "Migrate deck entries 111-165 to root and phrase cards"
   syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
   ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
+
+**建完一个跨批次的词根，回头在清册上打标记。** 清册第二张表的「来源原卡」列若列出多个 `#`，
+说明这个词根被不止一批引用。谁先建它，谁就要在清册里给**其余那些行**加 `（已由批次 N 建）`——
+主表对应行和补建表那一行都要加。不打标记，后面的批次读清册会以为它还没建，再建一次就 id 冲突。
+（`pimpin` 的来源是 #131、#214，横跨批次 3 和 4，是现存唯一一个还没落地的这类根。）
 
 **`并入 X`** — 本批不产出卡片。
 
@@ -1142,6 +1157,11 @@ git commit -m "Migrate deck entries 166-220 to root and phrase cards"
   syn:"⚠️ 迷路要用 tersesat（不说 sesat di jalan）；ajaran sesat 专指异端",
   ex:"Kami tersesat di dalam hutan karena tidak membawa peta.|因为没带地图，我们在森林里迷路了。"},
 ```
+
+**建完一个跨批次的词根，回头在清册上打标记。** 清册第二张表的「来源原卡」列若列出多个 `#`，
+说明这个词根被不止一批引用。谁先建它，谁就要在清册里给**其余那些行**加 `（已由批次 N 建）`——
+主表对应行和补建表那一行都要加。不打标记，后面的批次读清册会以为它还没建，再建一次就 id 冲突。
+（`pimpin` 的来源是 #131、#214，横跨批次 3 和 4，是现存唯一一个还没落地的这类根。）
 
 **`并入 X`** — 本批不产出卡片。
 
