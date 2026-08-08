@@ -744,13 +744,19 @@ deck so a zero-count category stays clickable."
 
 四种处置的写法：
 
+**先分清这张卡的来历。** 原库有对应条目的，`p`/`zh`/`c`/`syn`/`ex` 从 `OLD` 里搬；
+清册第二张表「补建的词根卡」里的（原库只有派生词、没有裸词根），`p`/`zh`/`ex` **必须现写**——
+派生词的读音、释义、例句都不是词根的，拿 `mengusir` 的例句去当 `usir` 的例句就是错的。
+`c` 沿用来源原卡分类，`syn` 从来源原卡上提。
+
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个，每条的 `zh` 从对应派生词原卡的 `zh` 来（若那张原卡在别的批次，照清册记的写，不要等），`ex` 从对应原卡的 `coll` 里挑一条最典型的词组；`syn` 由原卡 `syn` 加上落选衍生词的一句话说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 字段**不写进新卡**。
 
 ```js
- {t:"root",w:"usir",pos:"动词根（不单用）",p:"u-sir 乌-西尔",zh:"驱赶、驱逐",c:"教会",
-  der:[{w:"mengusir",zh:"驱赶、驱逐（及物）",ex:"mengusir setan 赶鬼"}],
-  syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",
-  ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+       {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
+  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
+  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
 ```
 
 **`并入 X`** — 本批**不产出卡片**，内容已经进了词根 X 的 `der`。若 X 属于后面的批次，在本批的提交说明里记一句，别重复建卡。
@@ -840,13 +846,19 @@ git commit -m "Migrate deck entries 1-55 to root and phrase cards"
 
 写法与 Task 5 Step 2 完全相同，四种处置的模板逐字重复如下。
 
+**先分清这张卡的来历。** 原库有对应条目的，`p`/`zh`/`c`/`syn`/`ex` 从 `OLD` 里搬；
+清册第二张表「补建的词根卡」里的（原库只有派生词、没有裸词根），`p`/`zh`/`ex` **必须现写**——
+派生词的读音、释义、例句都不是词根的，拿 `mengusir` 的例句去当 `usir` 的例句就是错的。
+`c` 沿用来源原卡分类，`syn` 从来源原卡上提。
+
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加上落选衍生词的说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 字段不写进新卡。
 
 ```js
- {t:"root",w:"usir",pos:"动词根（不单用）",p:"u-sir 乌-西尔",zh:"驱赶、驱逐",c:"教会",
-  der:[{w:"mengusir",zh:"驱赶、驱逐（及物）",ex:"mengusir setan 赶鬼"}],
-  syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",
-  ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+       {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
+  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
+  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
 ```
 
 **`并入 X`** — 本批不产出卡片，内容已经进了词根 X 的 `der`。
@@ -927,13 +939,19 @@ git commit -m "Migrate deck entries 56-110 to root and phrase cards"
 
 - [ ] **Step 2: 按处置逐条产出卡片**
 
+**先分清这张卡的来历。** 原库有对应条目的，`p`/`zh`/`c`/`syn`/`ex` 从 `OLD` 里搬；
+清册第二张表「补建的词根卡」里的（原库只有派生词、没有裸词根），`p`/`zh`/`ex` **必须现写**——
+派生词的读音、释义、例句都不是词根的，拿 `mengusir` 的例句去当 `usir` 的例句就是错的。
+`c` 沿用来源原卡分类，`syn` 从来源原卡上提。
+
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"usir",pos:"动词根（不单用）",p:"u-sir 乌-西尔",zh:"驱赶、驱逐",c:"教会",
-  der:[{w:"mengusir",zh:"驱赶、驱逐（及物）",ex:"mengusir setan 赶鬼"}],
-  syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",
-  ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+       {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
+  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
+  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
@@ -1014,13 +1032,19 @@ git commit -m "Migrate deck entries 111-165 to root and phrase cards"
 
 - [ ] **Step 2: 按处置逐条产出卡片**
 
+**先分清这张卡的来历。** 原库有对应条目的，`p`/`zh`/`c`/`syn`/`ex` 从 `OLD` 里搬；
+清册第二张表「补建的词根卡」里的（原库只有派生词、没有裸词根），`p`/`zh`/`ex` **必须现写**——
+派生词的读音、释义、例句都不是词根的，拿 `mengusir` 的例句去当 `usir` 的例句就是错的。
+`c` 沿用来源原卡分类，`syn` 从来源原卡上提。
+
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"usir",pos:"动词根（不单用）",p:"u-sir 乌-西尔",zh:"驱赶、驱逐",c:"教会",
-  der:[{w:"mengusir",zh:"驱赶、驱逐（及物）",ex:"mengusir setan 赶鬼"}],
-  syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",
-  ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+       {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
+  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
+  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
@@ -1104,13 +1128,19 @@ git commit -m "Migrate deck entries 166-220 to root and phrase cards"
 
 - [ ] **Step 2: 按处置逐条产出卡片**
 
+**先分清这张卡的来历。** 原库有对应条目的，`p`/`zh`/`c`/`syn`/`ex` 从 `OLD` 里搬；
+清册第二张表「补建的词根卡」里的（原库只有派生词、没有裸词根），`p`/`zh`/`ex` **必须现写**——
+派生词的读音、释义、例句都不是词根的，拿 `mengusir` 的例句去当 `usir` 的例句就是错的。
+`c` 沿用来源原卡分类，`syn` 从来源原卡上提。
+
 **`新建词根卡`** — 原卡的 `w`/`p`/`zh`/`c` 直接搬；`pos` 取清册的「词性」列；`der` 取清册「拟选 der」列的 1~2 个；`syn` 由原卡 `syn` 加落选衍生词说明拼成；`ex` 搬原卡 `ex`。旧的 `root` 和 `coll` 不写进新卡。
 
 ```js
- {t:"root",w:"usir",pos:"动词根（不单用）",p:"u-sir 乌-西尔",zh:"驱赶、驱逐",c:"教会",
-  der:[{w:"mengusir",zh:"驱赶、驱逐（及物）",ex:"mengusir setan 赶鬼"}],
-  syn:"mengeluarkan 使出去；menolak 拒绝；membuang 丢弃",
-  ex:"Yesus mengusir setan dari orang itu.|耶稣从那人身上赶出鬼。"},
+ {t:"root",w:"sesat",pos:"形容词",p:"se-sat 色-萨特",zh:"迷失的、走偏的",c:"教会",
+  der:[{w:"tersesat",zh:"迷路、走失",ex:"tersesat di hutan 在森林里迷路"},
+       {w:"menyesatkan",zh:"使人走迷、误导",ex:"ajaran yang menyesatkan 使人走迷的教导"}],
+  syn:"salah 单纯的错；keliru 弄错了；sesat 偏离正道，带方向感",
+  ex:"Domba yang sesat itu dicari sampai ketemu.|那只迷失的羊被寻找直到找着。"},
 ```
 
 **`并入 X`** — 本批不产出卡片。
