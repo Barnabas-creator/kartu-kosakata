@@ -245,7 +245,7 @@
 | 211 | menjinakkan | 动作 | 并入 jinak | jinak（#210） | — | — | menjinakkan bom |
 | 212 | peraturan | 工作 | 并入 atur | atur（补建） | — | — | — |
 | 213 | sah | 工作 | 新建词根卡 | sah | 形容词 | mengesahkan（批准使生效） | — |
-| 214 | pimpinan | 工作 | 并入 pimpin | pimpin（补建） | — | — | — |
+| 214 | pimpinan | 工作 | 并入 pimpin | pimpin（补建）（已由批次 3 建） | — | — | — |
 | 215 | tunda | 工作 | 新建词根卡 | tunda | 动词根 | menunda（推迟、延期） | — |
 | 216 | terlambat | 高频 | 并入 lambat | lambat（补建） | — | — | — |
 | 217 | secepatnya | 高频 | 并入 cepat | cepat（补建） | — | — | — |
@@ -371,7 +371,7 @@
 | tindak | 动词根 | bertindak（采取行动）/ tindakan（行动、措施） | #125 | 落选：menindak 查处（降级到 syn） |
 | serang | 动词根（不单用） | menyerang（攻击、袭击）/ serangan（攻击，名词） | #127 | — |
 | rakit | 动词根 | perakitan（组装、装配）/ merakit（组装） | #129 | rakit 另有「竹筏」义，上提到 syn |
-| pimpin | 动词根（不单用） | memimpin（带领、主持）/ pimpinan（领导层、管理者） | #131、#214 | 落选：pemimpin 领袖（降级到 syn） |
+| pimpin | 动词根（不单用） | memimpin（带领、主持）/ pimpinan（领导层、管理者） | #131、#214 | 已由批次 3 建。落选：pemimpin 领袖（降级到 syn） |
 | rasa | 名词 | perasaan（感觉、情绪）/ merasa（感觉、觉得） | #137 | ⚠️ rasa 偏味道/触感，情绪用 perasaan，上提到 syn |
 | contoh | 名词 | contohnya（例如、比如） | #164 | — |
 | kedip | 动词根 | kedip-kedip（闪个不停、忽明忽暗） | #165 | 重叠表反复 |
