@@ -392,7 +392,7 @@
 | bayar | 动词根 | membayar（付款）/ pembayaran（付款、支付） | #247 | — |
 | hubung | 动词根（不单用） | menghubungi（联系、对接）/ hubungan（关系） | #249 | 原卡词形 hubungi 是口语祈使 |
 | kembali | 动词根 | mengembalikan（归还、退回） | #251 | 原卡词形 kembalikan 是口语祈使；口语也说 balikin |
-| kelompok | 名词 | sekelompok（一组、一群、一伙） | #253 | — |
+| kelompok | 名词 | sekelompok（一组、一群、一伙） | #253 | 分类取「高频」不随原卡的「语法」——语法属于派生词 sekelompok 的义，kelompok 是普通名词 |
 | hadir | 动词根 | hadirat（（神的）同在、面前）/ kehadiran（出席、临在） | #254 | -at 是阿拉伯语后缀；两者语域分工上提到 syn |
 | sangkal | 动词根（不单用） | menyangkal（否认、不认；舍弃） | #256 | 反义 mengaku 承认，上提到 syn |
 | pikul | 动词根 | memikul（挑、扛、担负） | #257 | — |
