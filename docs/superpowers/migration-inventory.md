@@ -400,7 +400,7 @@
 | ngeri | 形容词 | mengerikan（可怕的、令人恐惧的） | #264 | me-…-kan 造使役形容词的规律上提到 syn |
 | rupa | 名词 | merupakan（是、构成，书面）/ rupanya（看样子、原来） | #265 | 落选：berupa 呈…形式、menyerupai 类似于（降级到 syn） |
 | huni | 动词根（不单用） | dihuni（被居住）/ penghuni（住户、居民） | #266 | — |
-| berontak | 动词根（不单用） | memberontak（悖逆、反叛）/ pemberontakan（叛乱） | #267 | ber- 是词根一部分，不拆；落选：pemberontak 叛徒 |
+| berontak | 动词根（不单用） | memberontak（悖逆、反叛）/ pemberontakan（叛乱） | #267 | ber- 是词根一部分，不拆；落选：pemberontak 反叛者、叛乱分子 |
 | selesai | 形容词 | menyelesaikan（解决、完成）/ penyelesaian（解决方案） | #271 | — |
 
 ## 抽出的词组卡汇总
