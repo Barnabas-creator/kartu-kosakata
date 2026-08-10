@@ -1722,7 +1722,7 @@ let applyingRemote = false;
 
 function pushKnownToRemote(){
   if(!syncRef || applyingRemote) return;
-  setDoc(syncRef, { known: [...known] }).catch(()=>{
+  setDoc(syncRef, { knownV2: [...known] }, { merge: true }).catch(()=>{
     setSyncState("推送失败，检查网络后会自动重试。");
   });
 }
@@ -1737,15 +1737,15 @@ async function connectSync(code){
   if(unsubscribeSync){ unsubscribeSync(); unsubscribeSync = null; }
   if(!code){ disconnectSync(); return; }
   localStorage.setItem(SYNC_CODE_KEY, code);
-  syncRef = doc(db, "progress-v2", code);
+  syncRef = doc(db, "progress", code);
   $("syncStatus").textContent = "连接中…";
   setSyncState("正在连接并合并进度…");
   try {
     const snap = await getDoc(syncRef);
-    const remoteIds = snap.exists() ? (snap.data().known || []) : [];
+    const remoteIds = snap.exists() ? (snap.data().knownV2 || []) : [];
     remoteIds.forEach(id => known.add(id));
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...known]));
-    await setDoc(syncRef, { known: [...known] });
+    await setDoc(syncRef, { knownV2: [...known] }, { merge: true });
     filter();
     $("knownCount").textContent = known.size;
     $("syncStatus").textContent = "已连接";
@@ -1755,7 +1755,7 @@ async function connectSync(code){
       const data = snap.data();
       if(!data) return;
       applyingRemote = true;
-      known = new Set(data.known || []);
+      known = new Set(data.knownV2 || []);
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...known]));
       applyingRemote = false;
       filter();
