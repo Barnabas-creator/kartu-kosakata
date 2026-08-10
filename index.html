@@ -1735,7 +1735,7 @@ async function connectSync(code){
   if(unsubscribeSync){ unsubscribeSync(); unsubscribeSync = null; }
   if(!code){ disconnectSync(); return; }
   localStorage.setItem(SYNC_CODE_KEY, code);
-  syncRef = doc(db, "progress", code);
+  syncRef = doc(db, "progress-v2", code);
   $("syncStatus").textContent = "连接中…";
   setSyncState("正在连接并合并进度…");
   try {
@@ -1820,10 +1820,13 @@ function render(){
     const scope = type === "全部" ? cat : `${TYPE_LABEL[type]} · ${cat}`;
     $("tagF").textContent = scope;
     $("tagB").textContent = scope;
-    $("w").textContent = "🎉";
+    const inScope = deck.some(d => inCat(d) && inType(d));
+    $("w").textContent = inScope ? "🎉" : "—";
     $("p").textContent = "";
-    $("zh").textContent = "这个分类的词你都记住了！";
-    $("detail").innerHTML = `<div class="row"><i>点击下方"已掌握列表"可以把词移出来重新练习。</i></div>`;
+    $("zh").textContent = inScope ? "这个分类的词你都记住了！" : "这个组合下没有卡片。";
+    $("detail").innerHTML = inScope
+      ? `<div class="row"><i>点击下方"已掌握列表"可以把词移出来重新练习。</i></div>`
+      : `<div class="row"><i>换一个分类，或把类型切回"全部"。</i></div>`;
     $("pos").textContent = "0 / 0";
     $("fill").style.width = "0%";
     return;
