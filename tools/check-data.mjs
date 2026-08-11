@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 const TYPES = new Set(["root", "phrase"]);
 const LEGACY_FIELDS = ["root", "coll"];
+export const CATS = ["名词","动词","形容词","虚词","高频","工作","教会","生活","辨音","其他"];
+const CAT_SET = new Set(CATS);
 
 export function extractData(html) {
   const marker = html.indexOf("const DATA = [");
@@ -31,7 +33,20 @@ export function validateCard(card, where) {
     errs.push(`${where}：t 必须是 "root" 或 "phrase"，实际是 ${JSON.stringify(card?.t)}`);
     return errs;
   }
-  for (const f of ["w", "p", "zh", "c", "ex"]) needText(card, f, errs, where);
+  for (const f of ["w", "p", "zh", "ex"]) needText(card, f, errs, where);
+  if (!Array.isArray(card.c) || card.c.length === 0) {
+    errs.push(`${where}：c 必须是非空数组`);
+  } else {
+    const seen = new Set();
+    for (const v of card.c) {
+      if (!CAT_SET.has(v)) errs.push(`${where}：分类 ${JSON.stringify(v)} 不在分类表内`);
+      if (seen.has(v)) errs.push(`${where}：分类 ${v} 重复`);
+      seen.add(v);
+    }
+    if (card.c.includes("其他") && card.c.length > 1) {
+      errs.push(`${where}：其他 是兜底标签，不能与别的标签共存`);
+    }
+  }
   for (const f of LEGACY_FIELDS) {
     if (f in card) errs.push(`${where}：残留旧字段 ${f}，迁移后必须删除`);
   }
@@ -47,7 +62,7 @@ export function validateCard(card, where) {
     if (!Array.isArray(der)) {
       errs.push(`${where}：der 必须是数组`);
     } else {
-      if (der.length > 2) errs.push(`${where}：der 最多 2 条，实际 ${der.length} 条`);
+      if (der.length > 4) errs.push(`${where}：der 最多 4 条，实际 ${der.length} 条`);
       der.forEach((d, i) => {
         const dw = `${where} der[${i}]`;
         for (const f of ["w", "zh", "ex"]) needText(d, f, errs, dw);

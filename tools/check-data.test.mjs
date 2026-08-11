@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extractData, cardId, validateCard, validateDeck, lintDeck } from "./check-data.mjs";
+import { extractData, cardId, validateCard, validateDeck, lintDeck, CATS } from "./check-data.mjs";
 
 const goodRoot = {
   t: "root", w: "ajar", pos: "动词根（不单用）", p: "a-jar 阿-乍",
-  zh: "教导", c: "学习",
+  zh: "教导", c: ["动词","教会"],
   der: [
     { w: "mengajar", zh: "教、授课", ex: "mengajar di sekolah 在学校教书" },
     { w: "ajaran", zh: "教义、道理", ex: "ajaran sesat 异端" }
@@ -14,7 +14,7 @@ const goodRoot = {
 };
 
 const goodPhrase = {
-  t: "phrase", w: "air terjun", p: "a-ir ter-jun", zh: "瀑布", c: "地形",
+  t: "phrase", w: "air terjun", p: "a-ir ter-jun", zh: "瀑布", c: ["名词","生活"],
   lit: "air 水 + terjun 跳下",
   note: "固定组合，不说 air jatuh",
   ex: "Kami pergi melihat air terjun.|我们去看瀑布。"
@@ -58,10 +58,15 @@ test("词根卡缺 pos 报错", () => {
   assert.equal(errs.filter(e => /pos/.test(e)).length, 1);
 });
 
-test("der 超过 2 条报错", () => {
-  const der = [...goodRoot.der, { w: "pelajar", zh: "学生", ex: "pelajar SMA 高中生" }];
+test("der 超过 4 条报错", () => {
+  const der = [
+    ...goodRoot.der,
+    { w: "pelajar", zh: "学生", ex: "pelajar SMA 高中生" },
+    { w: "pelajaran", zh: "功课", ex: "pelajaran hari ini 今天的功课" },
+    { w: "pengajar", zh: "教师", ex: "pengajar sekolah minggu 主日学老师" }
+  ];
   const errs = validateCard({ ...goodRoot, der }, "#1");
-  assert.equal(errs.filter(e => /der 最多 2 条/.test(e)).length, 1);
+  assert.equal(errs.filter(e => /der 最多 4 条/.test(e)).length, 1);
 });
 
 test("der 缺字段报错", () => {
@@ -153,4 +158,54 @@ test("lintDeck：只在中文半边出现不算命中，仍要报", () => {
   const warnings = lintDeck([card]);
   assert.equal(warnings.length, 1);
   assert.match(warnings[0], /metode/);
+});
+
+test("CATS 是十个标签，顺序固定", () => {
+  assert.deepEqual(CATS, ["名词","动词","形容词","虚词","高频","工作","教会","生活","辨音","其他"]);
+});
+
+test("c 是合法数组时零错误", () => {
+  assert.deepEqual(validateCard({ ...goodRoot, c: ["动词","教会"] }, "#1"), []);
+});
+
+test("c 是字符串报错", () => {
+  const errs = validateCard({ ...goodRoot, c: "教会" }, "#1");
+  assert.equal(errs.filter(e => /c 必须是非空数组/.test(e)).length, 1);
+});
+
+test("c 是空数组报错", () => {
+  const errs = validateCard({ ...goodRoot, c: [] }, "#1");
+  assert.equal(errs.filter(e => /c 必须是非空数组/.test(e)).length, 1);
+});
+
+test("c 含表外值报错", () => {
+  const errs = validateCard({ ...goodRoot, c: ["动词","地形"] }, "#1");
+  assert.equal(errs.filter(e => /不在分类表内/.test(e)).length, 1);
+});
+
+test("c 有重复值报错", () => {
+  const errs = validateCard({ ...goodRoot, c: ["动词","动词"] }, "#1");
+  assert.equal(errs.filter(e => /重复/.test(e)).length, 1);
+});
+
+test("其他 与别的标签共存报错", () => {
+  const errs = validateCard({ ...goodRoot, c: ["动词","其他"] }, "#1");
+  assert.equal(errs.filter(e => /其他.*不能与/.test(e)).length, 1);
+});
+
+test("只有 其他 一个标签合法", () => {
+  assert.deepEqual(validateCard({ ...goodRoot, c: ["其他"] }, "#1"), []);
+});
+
+test("der 4 条合法，5 条报错", () => {
+  const four = [
+    { w: "mengajar", zh: "教", ex: "mengajar di sekolah 在学校教书" },
+    { w: "ajaran", zh: "教义", ex: "ajaran sesat 异端" },
+    { w: "pelajar", zh: "学生", ex: "pelajar SMA 高中生" },
+    { w: "pelajaran", zh: "功课", ex: "pelajaran hari ini 今天的功课" }
+  ];
+  assert.deepEqual(validateCard({ ...goodRoot, c: ["动词","教会"], der: four }, "#1"), []);
+  const five = [...four, { w: "pengajar", zh: "教师", ex: "pengajar sekolah minggu 主日学老师" }];
+  const errs = validateCard({ ...goodRoot, c: ["动词","教会"], der: five }, "#1");
+  assert.equal(errs.filter(e => /der 最多 4 条/.test(e)).length, 1);
 });
