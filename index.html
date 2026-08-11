@@ -144,7 +144,8 @@
   .row i { font-style: normal; }
   .ex { margin-top: 12px; padding: 12px; background: var(--paper); border-left: 3px solid var(--gold); font-size: 14px; line-height: 1.6; }
   .ex em { font-style: italic; color: var(--moss); display: block; margin-bottom: 3px; }
-  .der-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 14px; }
+  .der-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  @media (max-width: 480px) { .der-grid { grid-template-columns: 1fr; } }
   .der { padding: 9px 0; border-top: 1px solid var(--paper-2); font-size: 14px; line-height: 1.5; }
   .der .dw { display: block; font-weight: 600; color: var(--ink); word-break: break-word; }
   .der .dz { display: block; color: var(--ink); }
