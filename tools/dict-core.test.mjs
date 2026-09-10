@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   normalizeQuery, slugify, findInLexicon,
   bucketOf, filterByBucket, groupHitsByDate,
-  validateEntry, recordHit, mergeLexicons
+  validateEntry, recordHit, mergeLexicons, entryToCard
 } from "../dict-core.mjs";
 
 test("normalizeQuery 去空白、转小写、压缩空格", () => {
@@ -165,4 +165,37 @@ test("mergeLexicons 按词根合并，hits 去重后按时间升序", () => {
   const ajar = merged.find(e => e.root === "ajar");
   assert.equal(ajar.count, 3);
   assert.deepEqual(ajar.hits.map(h => h.via), [null, "ajaran", "mengajar"]);
+});
+
+test("entryToCard 映射字段并截到 4 个衍生词", () => {
+  const mk = (w) => ({ w, ipa: "x", zh: `${w}的意思`, phrase: { t: `${w} pakai`, zh: "用法" }, example: { t: "s", zh: "句" } });
+  const entry = {
+    root: "ajar", ipa: "ˈa.dʒar", core: "教导",
+    rootBlock: { ipa: "ˈa.dʒar", zh: "教与学两个方向",
+      phrases: [], examples: [{ t: "Yesus mengajar.", zh: "耶稣教导。" }] },
+    ders: ["mengajar", "ajaran", "pelajar", "pelajaran", "pengajaran"].map(mk),
+    derSlugs: []
+  };
+  const card = entryToCard(entry, ["动词", "教会"]);
+  assert.equal(card.t, "root");
+  assert.equal(card.w, "ajar");
+  assert.equal(card.p, "ˈa.dʒar");
+  assert.equal(card.zh, "教导");
+  assert.equal(card.src, "dict");
+  assert.deepEqual(card.c, ["动词", "教会"]);
+  assert.equal(card.der.length, 4);
+  assert.deepEqual(card.der[0], { w: "mengajar", zh: "mengajar的意思", ex: "mengajar pakai 用法" });
+  assert.equal(card.syn, "教与学两个方向");
+  assert.equal(card.ex, "Yesus mengajar.|耶稣教导。");
+});
+
+test("entryToCard 在没给分类时兜底成「其他」", () => {
+  const entry = {
+    root: "baru", ipa: "ˈba.ru", core: "新的",
+    rootBlock: { zh: "形容词", phrases: [], examples: [] },
+    ders: [{ w: "terbaru", ipa: "x", zh: "最新的", phrase: { t: "a", zh: "b" }, example: { t: "c", zh: "d" } }]
+  };
+  const card = entryToCard(entry, []);
+  assert.deepEqual(card.c, ["其他"]);
+  assert.equal(card.ex, "");
 });

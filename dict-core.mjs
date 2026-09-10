@@ -127,3 +127,23 @@ export function mergeLexicons(local, remote) {
   }
   return out;
 }
+
+export function entryToCard(entry, cats) {
+  const first = entry.rootBlock?.examples?.[0];
+  return {
+    t: "root",
+    w: entry.root,
+    pos: "词根",
+    p: entry.ipa ?? "",
+    zh: entry.core ?? "",
+    c: (cats && cats.length) ? [...cats] : ["其他"],
+    der: (entry.ders ?? []).slice(0, 4).map(d => ({
+      w: d.w,
+      zh: d.zh,
+      ex: [d.phrase?.t, d.phrase?.zh].filter(Boolean).join(" ")
+    })),
+    syn: entry.rootBlock?.zh ?? "",
+    ex: first ? `${first.t}|${first.zh}` : "",
+    src: "dict"
+  };
+}
