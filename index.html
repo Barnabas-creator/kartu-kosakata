@@ -111,6 +111,19 @@
   }
   .libitem b { font-size: 15px; }
   .libitem span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); }
+
+  .tocard { margin-top: 18px; border-top: 1px solid var(--ink); padding-top: 12px; }
+  .tocard .cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+  .tocard .cats button {
+    font-size: 12px; padding: 5px 10px; border: 1px solid var(--mute);
+    background: transparent; color: var(--mute); cursor: pointer; border-radius: 2px;
+  }
+  .tocard .cats button.on { border-color: var(--moss); background: var(--moss); color: var(--paper); }
+  .tocard .go {
+    padding: 9px 16px; border: 1.5px solid var(--moss); background: var(--moss);
+    color: var(--paper); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 2px;
+  }
+  .tocard .done { font-size: 13px; color: var(--moss); }
   .masthead .sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -2024,6 +2037,29 @@ function setApiKey(key){
   if(syncRef) setDoc(syncRef, { apiKey }, { merge: true }).catch(()=>{});
 }
 
+const CARDS_KEY = "kosakata-cards-v1";
+let userCards = (()=>{
+  try { return JSON.parse(localStorage.getItem(CARDS_KEY) || "[]"); } catch(e){ return []; }
+})();
+
+function rebuildDeck(){
+  // 同名卡只留一张：手写卡在前，词典转出来的卡覆盖它。
+  const byId = new Map();
+  for(const d of DATA.concat(userCards)) byId.set(cardId(d), {...d, id: cardId(d)});
+  deck = [...byId.values()];
+  filter();
+  cats();
+}
+
+async function saveCard(entry, cats){
+  const card = entryToCard(entry, cats);
+  const i = userCards.findIndex(c => c.w === card.w);
+  if(i >= 0) userCards[i] = card; else userCards.push(card);
+  localStorage.setItem(CARDS_KEY, JSON.stringify(userCards));
+  rebuildDeck();
+  if(syncRef) await setDoc(doc(syncRef, "cards", slugify(card.w)), card).catch(()=>{});
+}
+
 async function attachLexiconSync(){
   if(!syncRef) return;
   try {
@@ -2032,6 +2068,15 @@ async function attachLexiconSync(){
     lexicon = mergeLexicons(lexicon, remote);
     saveLexiconLocal();
     for(const entry of lexicon) pushEntryToRemote(entry);
+
+    const cardSnap = await getDocs(collection(syncRef, "cards"));
+    const remoteCards = cardSnap.docs.map(d => d.data());
+    for(const c of remoteCards){
+      if(!userCards.some(u => u.w === c.w)) userCards.push(c);
+    }
+    localStorage.setItem(CARDS_KEY, JSON.stringify(userCards));
+    rebuildDeck();
+
     renderDict();
     renderTimeline();
   } catch(e){}
@@ -2098,7 +2143,7 @@ function inCat(d){ return cat === "全部" || d.c.includes(cat); }
 
 function cats(){
   $("cats").innerHTML = ["全部", ...CATS].map(c=>{
-    const n = c === "全部" ? DATA.length : DATA.filter(d=>d.c.includes(c)).length;
+    const n = c === "全部" ? deck.length : deck.filter(d=>d.c.includes(c)).length;
     return `<button class="chip ${c===cat?'on':''}" data-c="${c}">${c} ${n}</button>`;
   }).join("");
   $("cats").querySelectorAll(".chip").forEach(b=>{
@@ -2243,7 +2288,30 @@ function dictMsg(text){
   el.textContent = text;
 }
 
-function renderToCardBox(entry){}
+function renderToCardBox(entry){
+  const box = $("toCardBox");
+  if(userCards.some(c => c.w === entry.root)){
+    box.innerHTML = `<div class="tocard"><span class="done">已在牌组里</span></div>`;
+    return;
+  }
+  box.innerHTML = `<div class="tocard">
+    <div>选分类，然后转成一张学习卡：</div>
+    <div class="cats">${CATS.map(c => `<button data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+    <button class="go">转成学习卡</button>
+  </div>`;
+  const picked = new Set();
+  for(const b of box.querySelectorAll(".cats button")){
+    b.addEventListener("click", ()=>{
+      const c = b.dataset.c;
+      if(picked.has(c)) picked.delete(c); else picked.add(c);
+      b.classList.toggle("on", picked.has(c));
+    });
+  }
+  box.querySelector(".go").addEventListener("click", async ()=>{
+    await saveCard(entry, [...picked]);
+    renderToCardBox(entry);
+  });
+}
 
 function renderEntry(entry, matched, cached){
   const rb = entry.rootBlock || {};
@@ -2334,7 +2402,7 @@ for(const el of document.querySelectorAll(".tabs .tab")){
   el.addEventListener("click", ()=> showView(el.dataset.view));
 }
 
-cats(); filter();
+rebuildDeck();
 const savedSyncCode = localStorage.getItem(SYNC_CODE_KEY);
 if(savedSyncCode) connectSync(savedSyncCode);
 </script>
