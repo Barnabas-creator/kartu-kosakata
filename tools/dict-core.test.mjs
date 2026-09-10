@@ -4,7 +4,7 @@ import {
   normalizeQuery, slugify, findInLexicon,
   bucketOf, filterByBucket, groupHitsByDate,
   validateEntry, recordHit, mergeLexicons, entryToCard,
-  DICT_PROMPT, buildRequestBody, parseGeminiResponse, entryFromResponse
+  DICT_PROMPT, RESPONSE_SCHEMA, buildRequestBody, parseGeminiResponse, entryFromResponse
 } from "../dict-core.mjs";
 
 test("normalizeQuery 去空白、转小写、压缩空格", () => {
@@ -245,4 +245,14 @@ test("entryFromResponse 补齐 derSlugs、query、空 hits", () => {
   assert.equal(entry.count, 0);
   assert.equal(entry.model, "gemini-2.5-flash");
   assert.equal(entry.createdAt, "2026-09-10T01:00:00Z");
+});
+
+test("RESPONSE_SCHEMA 把内容字段全列进 required", () => {
+  for(const f of ["notFound","root","ipa","core","rootBlock","ders"]){
+    assert.ok(RESPONSE_SCHEMA.required.includes(f), `required 缺 ${f}`);
+  }
+});
+
+test("DICT_PROMPT 明说 ders 不能为空", () => {
+  assert.ok(DICT_PROMPT.includes("ders 绝不能为空"));
 });

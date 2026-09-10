@@ -155,12 +155,13 @@ export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典�
 规则：
 1. 找出该词的原型词 (Kata Dasar)，填进 root。输入本身可能就是原型词。
 2. 所有发音字段一律用国际音标 (IPA)，不要用音节拆分或汉字注音。
-3. ders 是衍生词列表：列全，常见的和不常见的都要，不限数量。第一项必须是原型词本身的形式；只有当原型词不能作为独立词汇使用时，才从第一个有效衍生词开始。
+3. ders 是衍生词列表：列全，常见的和不常见的都要，不限数量。第一项必须是原型词本身的形式；只有当原型词不能作为独立词汇使用时，才从第一个有效衍生词开始。ders 绝不能为空——如果这个词确实没有任何派生形式，就把它本身作为唯一一项。
 4. rootBlock 恰好 3 个常见短语、恰好 2 个例句。
 5. ders 每一项恰好 1 个短语、1 个例句。
 6. 所有内容字段只写内容，不要写「衍生词」「例句」「含义」「短语」这类标签词。
 7. 短语和例句都用 {t, zh} 表示：t 是印尼语原文，zh 是中文翻译。
-8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段留空。`;
+8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段填空串和空数组。
+9. notFound 为 false 时，root、ipa、core、rootBlock、ders 每一项都必须有真实内容，不能留空。`;
 
 const PAIR = {
   type: "OBJECT",
@@ -201,7 +202,9 @@ export const RESPONSE_SCHEMA = {
       }
     }
   },
-  required: ["notFound"]
+  // notFound 为真时，模型仍要把其余字段填成空串和空数组。
+  // 只列 notFound 的话，模型会大面积省略内容字段。
+  required: ["notFound", "root", "ipa", "core", "rootBlock", "ders"]
 };
 
 export function buildRequestBody(word) {
