@@ -337,12 +337,12 @@
   </div>
 
   <nav class="tabs">
-    <button class="tab on" data-view="card">卡片</button>
-    <button class="tab" data-view="dict">词典</button>
+    <button class="tab on" data-view="dict">词典</button>
+    <button class="tab" data-view="card">卡片</button>
     <button class="tab" data-view="timeline">日历</button>
   </nav>
 
-  <div id="viewCard">
+  <div id="viewCard" hidden>
   <div class="controls" id="cats"></div>
 
   <div class="meter">
@@ -377,7 +377,7 @@
   <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
   </div>
 
-  <div id="viewDict" hidden>
+  <div id="viewDict">
     <div class="dictbar">
       <input id="dictInput" type="search" placeholder="输入一个印尼语词" autocomplete="off">
       <button id="dictGo">查</button>
@@ -2516,6 +2516,7 @@ for(const el of document.querySelectorAll(".tabs .tab")){
 }
 
 rebuildDeck();
+showView("dict");
 const savedSyncCode = localStorage.getItem(SYNC_CODE_KEY);
 if(savedSyncCode) connectSync(savedSyncCode);
 </script>
