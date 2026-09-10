@@ -138,6 +138,19 @@
   }
   .tlitem.ai { background: var(--moss); color: var(--paper); }
   .tlitem em { font-style: normal; opacity: 0.7; font-size: 12px; }
+
+  .keyrow { margin-top: 16px; border-top: 1px solid var(--paper-2); padding-top: 14px; }
+  .keyrow label { display: block; font-size: 13px; margin-bottom: 6px; }
+  .keyrow input {
+    width: 100%; padding: 9px 10px; border: 1.5px solid var(--ink);
+    background: var(--paper-2); color: var(--ink); border-radius: 2px; margin-bottom: 8px;
+  }
+  .keyrow button {
+    padding: 7px 14px; border: 1.5px solid var(--ink); background: var(--ink);
+    color: var(--paper); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 2px;
+  }
+  .keyhint { font-size: 12px; color: var(--mute); line-height: 1.6; margin-top: 8px; }
+  .keyhint a { color: var(--moss); }
   .masthead .sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -420,6 +433,17 @@
         <button class="btn ghost" id="syncDisconnectBtn">断开同步</button>
       </div>
       <p class="sync-state" id="syncState"></p>
+      <div class="keyrow">
+        <label for="apiKeyInput">Gemini API 密钥</label>
+        <input id="apiKeyInput" type="password" placeholder="AIza…" autocomplete="off">
+        <button id="apiKeySave">保存</button>
+        <div class="keyhint">
+          词典功能要用。免费密钥在
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>
+          建，不用绑卡。填了之后会跟同步码一起存，换设备不用再填。
+        </div>
+        <div id="apiKeyState" class="keyhint"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2265,7 +2289,16 @@ $("modalOverlay").onclick = e=>{ if(e.target.id==="modalOverlay") $("modalOverla
 $("syncBtn").onclick = ()=>{
   $("syncCodeInput").value = localStorage.getItem(SYNC_CODE_KEY) || "";
   setSyncState(syncRef ? `已连接，同步码：${localStorage.getItem(SYNC_CODE_KEY)}` : "");
+  $("apiKeyInput").value = "";
+  $("apiKeyState").textContent = apiKey ? `已保存，尾号 ${apiKey.slice(-4)}` : "未设置";
   $("syncModalOverlay").classList.add("show");
+};
+$("apiKeySave").onclick = ()=>{
+  const v = $("apiKeyInput").value.trim();
+  if(!v){ $("apiKeyState").textContent = "没填内容。"; return; }
+  setApiKey(v);
+  $("apiKeyInput").value = "";
+  $("apiKeyState").textContent = `已保存，尾号 ${apiKey.slice(-4)}`;
 };
 $("syncModalClose").onclick = ()=> $("syncModalOverlay").classList.remove("show");
 $("syncModalOverlay").onclick = e=>{ if(e.target.id==="syncModalOverlay") $("syncModalOverlay").classList.remove("show"); };
