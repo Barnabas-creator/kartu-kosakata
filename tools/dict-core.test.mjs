@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import {
   normalizeQuery, slugify, findInLexicon,
   bucketOf, filterByBucket, groupHitsByDate,
-  validateEntry, recordHit, mergeLexicons, entryToCard
+  validateEntry, recordHit, mergeLexicons, entryToCard,
+  DICT_PROMPT, buildRequestBody, parseGeminiResponse, entryFromResponse
 } from "../dict-core.mjs";
 
 test("normalizeQuery 去空白、转小写、压缩空格", () => {
@@ -198,4 +199,50 @@ test("entryToCard 在没给分类时兜底成「其他」", () => {
   const card = entryToCard(entry, []);
   assert.deepEqual(card.c, ["其他"]);
   assert.equal(card.ex, "");
+});
+
+test("DICT_PROMPT 保留 gem 的硬性规则，且不提英语", () => {
+  assert.ok(DICT_PROMPT.includes("Kata Dasar"));
+  assert.ok(DICT_PROMPT.includes("dict.com"));
+  assert.ok(DICT_PROMPT.includes("IPA"));
+  assert.ok(!DICT_PROMPT.includes("英语"));
+  assert.ok(!DICT_PROMPT.includes("English"));
+});
+
+test("buildRequestBody 把词放进 contents，并要求 JSON 输出", () => {
+  const body = buildRequestBody("mengajar");
+  assert.equal(body.contents[0].parts[0].text, "mengajar");
+  assert.equal(body.generationConfig.responseMimeType, "application/json");
+  assert.ok(body.generationConfig.responseSchema);
+  assert.ok(body.systemInstruction.parts[0].text.includes("Kata Dasar"));
+});
+
+test("parseGeminiResponse 剥出模型返回的 JSON", () => {
+  const raw = { candidates: [{ content: { parts: [{ text: '{"notFound":false,"root":"ajar"}' }] } }] };
+  const out = parseGeminiResponse(raw);
+  assert.equal(out.ok, true);
+  assert.equal(out.data.root, "ajar");
+});
+
+test("parseGeminiResponse 在结构不对或不是 JSON 时报错", () => {
+  assert.equal(parseGeminiResponse({}).ok, false);
+  assert.equal(parseGeminiResponse({ candidates: [] }).ok, false);
+  const bad = { candidates: [{ content: { parts: [{ text: "不是 JSON" }] } }] };
+  assert.equal(parseGeminiResponse(bad).ok, false);
+});
+
+test("entryFromResponse 补齐 derSlugs、query、空 hits", () => {
+  const data = {
+    notFound: false, root: "Ajar", ipa: "ˈa.dʒar", core: "教导",
+    rootBlock: { ipa: "x", zh: "y", phrases: [], examples: [] },
+    ders: [{ w: "Mengajar" }, { w: "ajaran" }]
+  };
+  const entry = entryFromResponse(data, " MengAjar ", "gemini-2.5-flash", "2026-09-10T01:00:00Z");
+  assert.equal(entry.root, "ajar");
+  assert.equal(entry.query, "mengajar");
+  assert.deepEqual(entry.derSlugs, ["ajar", "mengajar", "ajaran"]);
+  assert.deepEqual(entry.hits, []);
+  assert.equal(entry.count, 0);
+  assert.equal(entry.model, "gemini-2.5-flash");
+  assert.equal(entry.createdAt, "2026-09-10T01:00:00Z");
 });

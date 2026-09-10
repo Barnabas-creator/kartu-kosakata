@@ -147,3 +147,103 @@ export function entryToCard(entry, cats) {
     src: "dict"
   };
 }
+
+export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典智能助手，精通印尼语 (Bahasa Indonesia) 和中文。
+
+任务：接收一个印尼语词汇，输出一份深度解析的词汇报告，权威性和深度对标 dict.com。
+
+规则：
+1. 找出该词的原型词 (Kata Dasar)，填进 root。输入本身可能就是原型词。
+2. 所有发音字段一律用国际音标 (IPA)，不要用音节拆分或汉字注音。
+3. ders 是衍生词列表：列全，常见的和不常见的都要，不限数量。第一项必须是原型词本身的形式；只有当原型词不能作为独立词汇使用时，才从第一个有效衍生词开始。
+4. rootBlock 恰好 3 个常见短语、恰好 2 个例句。
+5. ders 每一项恰好 1 个短语、1 个例句。
+6. 所有内容字段只写内容，不要写「衍生词」「例句」「含义」「短语」这类标签词。
+7. 短语和例句都用 {t, zh} 表示：t 是印尼语原文，zh 是中文翻译。
+8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段留空。`;
+
+const PAIR = {
+  type: "OBJECT",
+  properties: { t: { type: "STRING" }, zh: { type: "STRING" } },
+  required: ["t", "zh"]
+};
+
+export const RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    notFound: { type: "BOOLEAN" },
+    reason: { type: "STRING" },
+    root: { type: "STRING" },
+    ipa: { type: "STRING" },
+    core: { type: "STRING" },
+    rootBlock: {
+      type: "OBJECT",
+      properties: {
+        ipa: { type: "STRING" },
+        zh: { type: "STRING" },
+        phrases: { type: "ARRAY", items: PAIR },
+        examples: { type: "ARRAY", items: PAIR }
+      },
+      required: ["ipa", "zh", "phrases", "examples"]
+    },
+    ders: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          w: { type: "STRING" },
+          ipa: { type: "STRING" },
+          zh: { type: "STRING" },
+          phrase: PAIR,
+          example: PAIR
+        },
+        required: ["w", "ipa", "zh", "phrase", "example"]
+      }
+    }
+  },
+  required: ["notFound"]
+};
+
+export function buildRequestBody(word) {
+  return {
+    systemInstruction: { parts: [{ text: DICT_PROMPT }] },
+    contents: [{ role: "user", parts: [{ text: normalizeQuery(word) }] }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+      temperature: 0.2
+    }
+  };
+}
+
+export function parseGeminiResponse(json) {
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (typeof text !== "string") return { ok: false, error: "模型没有返回内容" };
+  try {
+    return { ok: true, data: JSON.parse(text) };
+  } catch {
+    return { ok: false, error: "模型返回的不是合法 JSON" };
+  }
+}
+
+export function entryFromResponse(data, query, model, now = new Date().toISOString()) {
+  const root = normalizeQuery(data.root);
+  const slugs = [root];
+  for (const d of data.ders ?? []) {
+    const s = normalizeQuery(d.w);
+    if (s && !slugs.includes(s)) slugs.push(s);
+  }
+  return {
+    root,
+    query: normalizeQuery(query),
+    ipa: data.ipa ?? "",
+    core: data.core ?? "",
+    rootBlock: data.rootBlock ?? null,
+    ders: data.ders ?? [],
+    derSlugs: slugs,
+    count: 0,
+    hits: [],
+    model,
+    createdAt: now
+  };
+}
