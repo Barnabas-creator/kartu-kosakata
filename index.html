@@ -62,6 +62,55 @@
     cursor: pointer; border-radius: 2px;
   }
   .tabs .tab.on { background: var(--ink); color: var(--paper); }
+
+  .dictbar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .dictbar input {
+    flex: 1; font-family: 'Inter', sans-serif; font-size: 16px;
+    padding: 10px 12px; border: 1.5px solid var(--ink);
+    background: var(--paper-2); color: var(--ink); border-radius: 2px;
+  }
+  .dictbar button {
+    padding: 10px 18px; border: 1.5px solid var(--ink);
+    background: var(--ink); color: var(--paper);
+    font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 2px;
+  }
+  .dictmsg {
+    padding: 12px; margin-bottom: 14px; border-left: 3px solid var(--clove);
+    background: var(--paper-2); font-size: 14px; line-height: 1.6;
+  }
+  .entry { border: 1.5px solid var(--ink); padding: 16px; background: var(--paper-2); }
+  .entry h2 { font-family: 'Fraunces', serif; font-size: 26px; }
+  .entry .meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); margin: 4px 0 12px; }
+  .entry .core { font-size: 16px; margin-bottom: 14px; }
+  .entry h3 {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--moss);
+    margin: 16px 0 8px; border-top: 1px solid var(--ink); padding-top: 8px;
+  }
+  .entry .line { margin: 6px 0; font-size: 14px; line-height: 1.6; }
+  .entry .line i { color: var(--mute); font-style: italic; }
+  .der { margin: 10px 0; padding-left: 10px; border-left: 2px solid var(--gold); }
+  .der.hit { border-left-color: var(--clove); background: rgba(201,162,39,0.12); }
+  .der b { font-size: 15px; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    padding: 2px 6px; border: 1px solid var(--moss); color: var(--moss);
+    border-radius: 2px; margin-left: 8px; vertical-align: middle;
+  }
+  .libhead { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 22px 0 10px; }
+  .libfilters { display: flex; gap: 6px; }
+  .libfilters .lf {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    padding: 5px 9px; border: 1px solid var(--mute); background: transparent;
+    color: var(--mute); cursor: pointer; border-radius: 2px;
+  }
+  .libfilters .lf.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .libitem {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 2px; border-bottom: 1px solid var(--paper-2); cursor: pointer;
+  }
+  .libitem b { font-size: 15px; }
+  .libitem span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); }
   .masthead .sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -293,7 +342,24 @@
   <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
   </div>
 
-  <div id="viewDict" hidden></div>
+  <div id="viewDict" hidden>
+    <div class="dictbar">
+      <input id="dictInput" type="search" placeholder="输入一个印尼语词" autocomplete="off">
+      <button id="dictGo">查</button>
+    </div>
+    <div id="dictMsg" class="dictmsg" hidden></div>
+    <div id="dictResult"></div>
+    <div class="libhead">
+      <span>词库 <b id="libCount">0</b></span>
+      <div class="libfilters">
+        <button class="lf on" data-b="all">全部</button>
+        <button class="lf" data-b="1">1 次</button>
+        <button class="lf" data-b="2-5">2-5 次</button>
+        <button class="lf" data-b="5+">5 次以上</button>
+      </div>
+    </div>
+    <div id="libList"></div>
+  </div>
   <div id="viewTimeline" hidden></div>
 
   <div class="tools-row">
@@ -1958,10 +2024,6 @@ function setApiKey(key){
   if(syncRef) setDoc(syncRef, { apiKey }, { merge: true }).catch(()=>{});
 }
 
-// 这两个在下面的视图代码里实现，这里先声明，供同步流程调用。
-function renderDict(){}
-function renderTimeline(){}
-
 async function attachLexiconSync(){
   if(!syncRef) return;
   try {
@@ -2167,6 +2229,96 @@ document.addEventListener("keydown", e=>{
   if(e.key==="1"){ go(1); }
   if(e.key==="2"){ markKnown(); }
 });
+
+let libBucket = "all";
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => (
+  { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]
+));
+
+function dictMsg(text){
+  const el = $("dictMsg");
+  if(!text){ el.hidden = true; el.textContent = ""; return; }
+  el.hidden = false;
+  el.textContent = text;
+}
+
+function renderToCardBox(entry){}
+
+function renderEntry(entry, matched, cached){
+  const rb = entry.rootBlock || {};
+  const pair = o => `<div class="line">${esc(o.t)} <i>${esc(o.zh)}</i></div>`;
+  const ders = (entry.ders || []).map(d => {
+    const on = normalizeQuery(d.w) === normalizeQuery(matched) ? " hit" : "";
+    return `<div class="der${on}">
+      <b>${esc(d.w)}</b> <i>${esc(d.ipa)}</i><br>${esc(d.zh)}
+      <div class="line">${esc(d.phrase?.t)} <i>${esc(d.phrase?.zh)}</i></div>
+      <div class="line">${esc(d.example?.t)} <i>${esc(d.example?.zh)}</i></div>
+    </div>`;
+  }).join("");
+
+  $("dictResult").innerHTML = `<div class="entry">
+    <h2>${esc(entry.root)}${cached ? `<span class="badge">库中 · 第 ${entry.count} 次</span>` : ""}</h2>
+    <div class="meta">${esc(entry.ipa)}</div>
+    <div class="core">${esc(entry.core)}</div>
+    <h3>词根</h3>
+    <div class="meta">${esc(rb.ipa)}</div>
+    <div class="core">${esc(rb.zh)}</div>
+    ${(rb.phrases || []).map(pair).join("")}
+    ${(rb.examples || []).map(pair).join("")}
+    <h3>衍生词</h3>
+    ${ders}
+    <div id="toCardBox"></div>
+  </div>`;
+  renderToCardBox(entry);
+}
+
+function renderLibrary(){
+  const list = filterByBucket(lexicon, libBucket)
+    .slice()
+    .sort((a, b) => b.count - a.count || a.root.localeCompare(b.root));
+  $("libCount").textContent = lexicon.length;
+  $("libList").innerHTML = list.length
+    ? list.map(e => `<div class="libitem" data-root="${esc(e.root)}">
+        <b>${esc(e.root)}</b><span>${esc(e.core)} · ${e.count} 次</span></div>`).join("")
+    : `<div class="dictmsg">这个区间还没有词。</div>`;
+  for(const el of $("libList").querySelectorAll(".libitem")){
+    el.addEventListener("click", ()=>{
+      const entry = lexicon.find(e => e.root === el.dataset.root);
+      if(entry){ renderEntry(entry, entry.root, true); window.scrollTo(0, 0); }
+    });
+  }
+}
+
+function renderDict(){
+  renderLibrary();
+}
+
+async function doLookup(){
+  const q = $("dictInput").value;
+  dictMsg("查询中…");
+  const out = await lookup(q);
+  if(out.status === "error" && out.message === "NOKEY"){
+    dictMsg("还没填 Gemini API 密钥。去底部的同步设置里填一个，免费密钥在 aistudio.google.com/apikey 建。");
+    return;
+  }
+  if(out.status === "error" || out.status === "notfound"){ dictMsg(out.message); return; }
+  dictMsg("");
+  renderEntry(out.entry, out.matched, out.status === "cached");
+  renderLibrary();
+}
+
+$("dictGo").addEventListener("click", doLookup);
+$("dictInput").addEventListener("keydown", e => { if(e.key === "Enter") doLookup(); });
+for(const el of document.querySelectorAll(".libfilters .lf")){
+  el.addEventListener("click", ()=>{
+    libBucket = el.dataset.b;
+    for(const b of document.querySelectorAll(".libfilters .lf")) b.classList.toggle("on", b === el);
+    renderLibrary();
+  });
+}
+
+function renderTimeline(){}
 
 function showView(name){
   for(const el of document.querySelectorAll(".tabs .tab")){
