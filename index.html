@@ -311,7 +311,12 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {
+  normalizeQuery, slugify, findInLexicon, bucketOf, filterByBucket,
+  groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard,
+  buildRequestBody, parseGeminiResponse, entryFromResponse
+} from "./dict-core.mjs";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDqL_KE6biXwcf_5KZ1i8xj3SCuZRXWppo",
@@ -1863,6 +1868,10 @@ async function connectSync(code){
     $("knownCount").textContent = known.size;
     $("syncStatus").textContent = "已连接";
     setSyncState(`已连接，同步码：${code}`);
+    const remoteKey = snap.exists() ? (snap.data().apiKey || "") : "";
+    if(remoteKey && !apiKey){ apiKey = remoteKey; localStorage.setItem(APIKEY_KEY, apiKey); }
+    else if(apiKey && !remoteKey){ await setDoc(syncRef, { apiKey }, { merge: true }); }
+    await attachLexiconSync();
     unsubscribeSync = onSnapshot(syncRef, snap=>{
       if(snap.metadata.hasPendingWrites) return;
       const data = snap.data();
@@ -1889,6 +1898,59 @@ function disconnectSync(){
   localStorage.removeItem(SYNC_CODE_KEY);
   $("syncStatus").textContent = "未设置";
   setSyncState("已断开同步，进度仍保存在本设备。");
+}
+
+const LEXICON_KEY = "kosakata-lexicon-v1";
+const APIKEY_KEY = "kosakata-api-key";
+const MODEL = "gemini-2.5-flash";
+
+function loadLexiconLocal(){
+  try {
+    const raw = localStorage.getItem(LEXICON_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){ return []; }
+}
+
+let lexicon = loadLexiconLocal();
+let apiKey = localStorage.getItem(APIKEY_KEY) || "";
+
+function saveLexiconLocal(){
+  try { localStorage.setItem(LEXICON_KEY, JSON.stringify(lexicon)); } catch(e){}
+}
+
+function upsertEntry(entry){
+  const i = lexicon.findIndex(e => slugify(e.root) === slugify(entry.root));
+  if(i >= 0) lexicon[i] = entry; else lexicon.push(entry);
+  saveLexiconLocal();
+  pushEntryToRemote(entry);
+}
+
+function pushEntryToRemote(entry){
+  if(!syncRef) return;
+  setDoc(doc(syncRef, "lexicon", slugify(entry.root)), entry).catch(()=>{});
+}
+
+function setApiKey(key){
+  apiKey = key.trim();
+  localStorage.setItem(APIKEY_KEY, apiKey);
+  if(syncRef) setDoc(syncRef, { apiKey }, { merge: true }).catch(()=>{});
+}
+
+// 这两个在下面的视图代码里实现，这里先声明，供同步流程调用。
+function renderDict(){}
+function renderTimeline(){}
+
+async function attachLexiconSync(){
+  if(!syncRef) return;
+  try {
+    const snap = await getDocs(collection(syncRef, "lexicon"));
+    const remote = snap.docs.map(d => d.data());
+    lexicon = mergeLexicons(lexicon, remote);
+    saveLexiconLocal();
+    for(const entry of lexicon) pushEntryToRemote(entry);
+    renderDict();
+    renderTimeline();
+  } catch(e){}
 }
 
 const $ = id => document.getElementById(id);
