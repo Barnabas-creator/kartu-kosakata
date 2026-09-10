@@ -124,6 +124,20 @@
     color: var(--paper); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 2px;
   }
   .tocard .done { font-size: 13px; color: var(--moss); }
+
+  .tlday { margin-bottom: 20px; }
+  .tlday h4 {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    letter-spacing: 0.08em; color: var(--mute);
+    border-bottom: 1px solid var(--ink); padding-bottom: 5px; margin-bottom: 9px;
+  }
+  .tlitem {
+    display: inline-block; margin: 0 7px 7px 0; padding: 5px 10px;
+    border: 1.5px solid var(--moss); border-radius: 2px;
+    font-size: 14px; cursor: pointer;
+  }
+  .tlitem.ai { background: var(--moss); color: var(--paper); }
+  .tlitem em { font-style: normal; opacity: 0.7; font-size: 12px; }
   .masthead .sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -2386,7 +2400,28 @@ for(const el of document.querySelectorAll(".libfilters .lf")){
   });
 }
 
-function renderTimeline(){}
+function renderTimeline(){
+  const groups = groupHitsByDate(lexicon);
+  if(!groups.length){
+    $("viewTimeline").innerHTML = `<div class="dictmsg">还没查过词。去词典页查第一个。</div>`;
+    return;
+  }
+  $("viewTimeline").innerHTML = groups.map(g => `<div class="tlday">
+    <h4>${g.date} · ${g.items.length} 词</h4>
+    ${g.items.map(i => `<span class="tlitem${i.ai ? " ai" : ""}" data-root="${esc(i.root)}">
+      ${i.via ? `${esc(i.via)} <em>→ ${esc(i.root)}</em>` : esc(i.root)}
+    </span>`).join("")}
+  </div>`).join("");
+  for(const el of $("viewTimeline").querySelectorAll(".tlitem")){
+    el.addEventListener("click", ()=>{
+      const entry = lexicon.find(e => e.root === el.dataset.root);
+      if(!entry) return;
+      showView("dict");
+      renderEntry(entry, entry.root, true);
+      window.scrollTo(0, 0);
+    });
+  }
+}
 
 function showView(name){
   for(const el of document.querySelectorAll(".tabs .tab")){
