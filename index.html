@@ -2041,7 +2041,14 @@ function disconnectSync(){
 
 const LEXICON_KEY = "kosakata-lexicon-v1";
 const APIKEY_KEY = "kosakata-api-key";
-const MODEL = "gemini-2.5-flash";
+// 首选模型。Google 会停用旧模型，所以下面留了一份候选清单，
+// 真被停用时 resolveModel() 去问一次可用清单，挑一个能用的换上。
+const MODEL_KEY = "kosakata-model";
+const MODEL_FALLBACKS = [
+  "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash",
+  "gemini-3-flash-preview", "gemini-2.5-flash"
+];
+let MODEL = localStorage.getItem(MODEL_KEY) || MODEL_FALLBACKS[0];
 
 function loadLexiconLocal(){
   try {
@@ -2122,7 +2129,27 @@ async function attachLexiconSync(){
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-async function callGemini(word){
+// 问一次可用模型清单，按候选顺序挑第一个能用的，挑中就记下来。
+async function resolveModel(){
+  let list;
+  try {
+    const res = await fetch(API_BASE, { headers: { "x-goog-api-key": apiKey } });
+    if(!res.ok) return null;
+    list = (await res.json()).models || [];
+  } catch(e){ return null; }
+  const usable = new Set(
+    list.filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+        .map(m => String(m.name).replace(/^models\//, ""))
+  );
+  const picked = MODEL_FALLBACKS.find(m => usable.has(m))
+    || [...usable].find(m => m.includes("flash"));
+  if(!picked || picked === MODEL) return null;
+  MODEL = picked;
+  localStorage.setItem(MODEL_KEY, picked);
+  return picked;
+}
+
+async function callGemini(word, allowRetry = true){
   if(!apiKey) return { ok:false, error:"NOKEY" };
   let res;
   try {
@@ -2134,9 +2161,19 @@ async function callGemini(word){
   } catch(e){
     return { ok:false, error:"连不上，词库里的词仍然可以查。" };
   }
+  if(res.status === 404 && allowRetry && await resolveModel()){
+    return callGemini(word, false);
+  }
   if(res.status === 401 || res.status === 403) return { ok:false, error:"密钥无效或已过期，去设置里换一个。" };
   if(res.status === 429) return { ok:false, error:"今日免费额度用完了，明天再试。" };
-  if(!res.ok) return { ok:false, error:`查询失败（HTTP ${res.status}）。` };
+  if(!res.ok){
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = body?.error?.message || "";
+    } catch(e){}
+    return { ok:false, error:`查询失败（HTTP ${res.status}）${detail ? "：" + detail : "。"}` };
+  }
   const parsed = parseGeminiResponse(await res.json());
   return parsed.ok ? { ok:true, data: parsed.data } : { ok:false, error: parsed.error };
 }
