@@ -113,12 +113,7 @@
   .libitem span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); }
 
   .tocard { margin-top: 18px; border-top: 1px solid var(--ink); padding-top: 12px; }
-  .tocard .cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
-  .tocard .cats button {
-    font-size: 12px; padding: 5px 10px; border: 1px solid var(--mute);
-    background: transparent; color: var(--mute); cursor: pointer; border-radius: 2px;
-  }
-  .tocard .cats button.on { border-color: var(--moss); background: var(--moss); color: var(--paper); }
+  .tocard .catnote { font-size: 12px; color: var(--mute); margin-left: 10px; }
   .tocard .go {
     padding: 9px 16px; border: 1.5px solid var(--moss); background: var(--moss);
     color: var(--paper); font-family: 'JetBrains Mono', monospace; cursor: pointer; border-radius: 2px;
@@ -453,7 +448,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
   normalizeQuery, slugify, findInLexicon, bucketOf, filterByBucket,
-  groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard,
+  groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry,
   buildRequestBody, parseGeminiResponse, entryFromResponse
 } from "./dict-core.mjs";
 
@@ -2096,8 +2091,8 @@ function rebuildDeck(){
   cats();
 }
 
-async function saveCard(entry, cats){
-  const card = entryToCard(entry, cats);
+async function saveCard(entry){
+  const card = entryToCard(entry);
   const i = userCards.findIndex(c => c.w === card.w);
   if(i >= 0) userCards[i] = card; else userCards.push(card);
   localStorage.setItem(CARDS_KEY, JSON.stringify(userCards));
@@ -2186,8 +2181,14 @@ async function callGemini(word, allowRetry = true){
     } catch(e){}
     return { ok:false, error:`查询失败（HTTP ${res.status}）${detail ? "：" + detail : "。"}` };
   }
-  const parsed = parseGeminiResponse(await res.json());
-  return parsed.ok ? { ok:true, data: parsed.data } : { ok:false, error: parsed.error };
+  const json = await res.json();
+  const meta = {
+    finishReason: json?.candidates?.[0]?.finishReason,
+    usage: json?.usageMetadata
+  };
+  const parsed = parseGeminiResponse(json);
+  if(!parsed.ok) console.log("[词典] 解析失败", { model: MODEL, meta, json });
+  return parsed.ok ? { ok:true, data: parsed.data, meta } : { ok:false, error: parsed.error };
 }
 
 async function lookup(rawQuery){
@@ -2214,7 +2215,10 @@ async function lookup(rawQuery){
 
   const entry = entryFromResponse(out.data, q, MODEL);
   const errs = validateEntry(entry);
-  if(errs.length) return { status:"error", message:`返回的内容不完整：${errs[0]}` };
+  if(errs.length){
+    console.log("[词典] 模型返回不合格", { model: MODEL, errs, raw: out.data, meta: out.meta });
+    return { status:"error", message:`返回的内容不完整：${errs[0]}` };
+  }
 
   const withHit = recordHit(entry, { via: normalizeQuery(entry.root) === q ? null : q, ai:true });
   upsertEntry(withHit);
@@ -2390,21 +2394,13 @@ function renderToCardBox(entry){
     box.innerHTML = `<div class="tocard"><span class="done">已在牌组里</span></div>`;
     return;
   }
+  const cats = catsForEntry(entry);
   box.innerHTML = `<div class="tocard">
-    <div>选分类，然后转成一张学习卡：</div>
-    <div class="cats">${CATS.map(c => `<button data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-    <button class="go">转成学习卡</button>
+    <button class="go">转成生词卡</button>
+    <span class="catnote">分类：${cats.map(esc).join(" · ")}</span>
   </div>`;
-  const picked = new Set();
-  for(const b of box.querySelectorAll(".cats button")){
-    b.addEventListener("click", ()=>{
-      const c = b.dataset.c;
-      if(picked.has(c)) picked.delete(c); else picked.add(c);
-      b.classList.toggle("on", picked.has(c));
-    });
-  }
   box.querySelector(".go").addEventListener("click", async ()=>{
-    await saveCard(entry, [...picked]);
+    await saveCard(entry);
     renderToCardBox(entry);
   });
 }

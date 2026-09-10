@@ -128,15 +128,15 @@ export function mergeLexicons(local, remote) {
   return out;
 }
 
-export function entryToCard(entry, cats) {
+export function entryToCard(entry) {
   const first = entry.rootBlock?.examples?.[0];
   return {
     t: "root",
     w: entry.root,
-    pos: "词根",
+    pos: POS_TAGS.includes(entry.pos) ? entry.pos : "词根",
     p: entry.ipa ?? "",
     zh: entry.core ?? "",
-    c: (cats && cats.length) ? [...cats] : ["其他"],
+    c: catsForEntry(entry),
     der: (entry.ders ?? []).slice(0, 4).map(d => ({
       w: d.w,
       zh: d.zh,
@@ -146,6 +146,17 @@ export function entryToCard(entry, cats) {
     ex: first ? `${first.t}|${first.zh}` : "",
     src: "dict"
   };
+}
+
+// 卡片分类沿用词库原有的一套标签：词性恰好一个，场景零到多个。
+// 「辨音」是人工挑的易混音练习集，不自动派；「其他」是词性判不出来时的兜底。
+export const POS_TAGS = ["名词", "动词", "形容词", "虚词"];
+export const SCENE_TAGS = ["高频", "工作", "教会", "生活"];
+
+export function catsForEntry(entry) {
+  const pos = POS_TAGS.includes(entry?.pos) ? entry.pos : "其他";
+  const scenes = (entry?.scenes ?? []).filter(s => SCENE_TAGS.includes(s));
+  return [pos, ...new Set(scenes)];
 }
 
 export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典智能助手，精通印尼语 (Bahasa Indonesia) 和中文。
@@ -161,7 +172,9 @@ export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典�
 6. 所有内容字段只写内容，不要写「衍生词」「例句」「含义」「短语」这类标签词。
 7. 短语和例句都用 {t, zh} 表示：t 是印尼语原文，zh 是中文翻译。
 8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段填空串和空数组。
-9. notFound 为 false 时，root、ipa、core、rootBlock、ders 每一项都必须有真实内容，不能留空。`;
+9. notFound 为 false 时，root、ipa、core、rootBlock、ders 每一项都必须有真实内容，不能留空。
+10. pos 是这个原型词的词性，从「名词、动词、形容词、虚词」里选恰好一个。虚词指介词、连词、助词、感叹词这类不作实义成分的词。
+11. scenes 是这个词最常出现的使用场景，从「高频、工作、教会、生活」里选零到多个：高频指日常最常用的核心词；工作指商务、办公、贸易场合；教会指基督教信仰与教会活动；生活指衣食住行、家庭、身体。判不准就少选，宁缺毋滥。`;
 
 const PAIR = {
   type: "OBJECT",
@@ -177,6 +190,8 @@ export const RESPONSE_SCHEMA = {
     root: { type: "STRING" },
     ipa: { type: "STRING" },
     core: { type: "STRING" },
+    pos: { type: "STRING", enum: POS_TAGS },
+    scenes: { type: "ARRAY", items: { type: "STRING", enum: SCENE_TAGS } },
     rootBlock: {
       type: "OBJECT",
       properties: {
@@ -204,7 +219,7 @@ export const RESPONSE_SCHEMA = {
   },
   // notFound 为真时，模型仍要把其余字段填成空串和空数组。
   // 只列 notFound 的话，模型会大面积省略内容字段。
-  required: ["notFound", "root", "ipa", "core", "rootBlock", "ders"]
+  required: ["notFound", "root", "ipa", "core", "pos", "scenes", "rootBlock", "ders"]
 };
 
 export function buildRequestBody(word) {
@@ -241,6 +256,8 @@ export function entryFromResponse(data, query, model, now = new Date().toISOStri
     query: normalizeQuery(query),
     ipa: data.ipa ?? "",
     core: data.core ?? "",
+    pos: data.pos ?? "",
+    scenes: data.scenes ?? [],
     rootBlock: data.rootBlock ?? null,
     ders: data.ders ?? [],
     derSlugs: slugs,

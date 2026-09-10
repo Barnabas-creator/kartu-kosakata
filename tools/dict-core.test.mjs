@@ -4,7 +4,8 @@ import {
   normalizeQuery, slugify, findInLexicon,
   bucketOf, filterByBucket, groupHitsByDate,
   validateEntry, recordHit, mergeLexicons, entryToCard,
-  DICT_PROMPT, RESPONSE_SCHEMA, buildRequestBody, parseGeminiResponse, entryFromResponse
+  DICT_PROMPT, RESPONSE_SCHEMA, buildRequestBody, parseGeminiResponse, entryFromResponse,
+  catsForEntry
 } from "../dict-core.mjs";
 
 test("normalizeQuery 去空白、转小写、压缩空格", () => {
@@ -177,7 +178,7 @@ test("entryToCard 映射字段并截到 4 个衍生词", () => {
     ders: ["mengajar", "ajaran", "pelajar", "pelajaran", "pengajaran"].map(mk),
     derSlugs: []
   };
-  const card = entryToCard(entry, ["动词", "教会"]);
+  const card = entryToCard({ ...entry, pos: "动词", scenes: ["教会"] });
   assert.equal(card.t, "root");
   assert.equal(card.w, "ajar");
   assert.equal(card.p, "ˈa.dʒar");
@@ -190,13 +191,13 @@ test("entryToCard 映射字段并截到 4 个衍生词", () => {
   assert.equal(card.ex, "Yesus mengajar.|耶稣教导。");
 });
 
-test("entryToCard 在没给分类时兜底成「其他」", () => {
+test("entryToCard 在模型没给词性时兜底成「其他」", () => {
   const entry = {
     root: "baru", ipa: "ˈba.ru", core: "新的",
     rootBlock: { zh: "形容词", phrases: [], examples: [] },
     ders: [{ w: "terbaru", ipa: "x", zh: "最新的", phrase: { t: "a", zh: "b" }, example: { t: "c", zh: "d" } }]
   };
-  const card = entryToCard(entry, []);
+  const card = entryToCard(entry);
   assert.deepEqual(card.c, ["其他"]);
   assert.equal(card.ex, "");
 });
@@ -248,11 +249,29 @@ test("entryFromResponse 补齐 derSlugs、query、空 hits", () => {
 });
 
 test("RESPONSE_SCHEMA 把内容字段全列进 required", () => {
-  for(const f of ["notFound","root","ipa","core","rootBlock","ders"]){
+  for(const f of ["notFound","root","ipa","core","pos","scenes","rootBlock","ders"]){
     assert.ok(RESPONSE_SCHEMA.required.includes(f), `required 缺 ${f}`);
   }
 });
 
 test("DICT_PROMPT 明说 ders 不能为空", () => {
   assert.ok(DICT_PROMPT.includes("ders 绝不能为空"));
+});
+
+test("catsForEntry 词性恰好一个，场景去重且只收合法值", () => {
+  assert.deepEqual(catsForEntry({ pos: "动词", scenes: ["教会","工作","教会"] }), ["动词","教会","工作"]);
+  assert.deepEqual(catsForEntry({ pos: "名词", scenes: [] }), ["名词"]);
+  assert.deepEqual(catsForEntry({ pos: "拟声词", scenes: ["音乐"] }), ["其他"]);
+  assert.deepEqual(catsForEntry({}), ["其他"]);
+});
+
+test("entryToCard 把模型判的词性和场景写进分类", () => {
+  const entry = {
+    root: "kerja", ipa: "i", core: "工作", pos: "动词", scenes: ["高频","工作"],
+    rootBlock: { zh: "辨析", phrases: [], examples: [] },
+    ders: [{ w: "bekerja", ipa: "x", zh: "工作", phrase: { t:"a", zh:"b" }, example: { t:"c", zh:"d" } }]
+  };
+  const card = entryToCard(entry);
+  assert.deepEqual(card.c, ["动词","高频","工作"]);
+  assert.equal(card.pos, "动词");
 });
