@@ -2149,20 +2149,32 @@ async function resolveModel(){
   return picked;
 }
 
-async function callGemini(word, allowRetry = true){
-  if(!apiKey) return { ok:false, error:"NOKEY" };
-  let res;
+async function requestOnce(model, word){
   try {
-    res = await fetch(`${API_BASE}/${MODEL}:generateContent`, {
+    return await fetch(`${API_BASE}/${model}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify(buildRequestBody(word))
     });
-  } catch(e){
-    return { ok:false, error:"连不上，词库里的词仍然可以查。" };
-  }
+  } catch(e){ return null; }
+}
+
+async function callGemini(word, allowRetry = true){
+  if(!apiKey) return { ok:false, error:"NOKEY" };
+  const res0 = await requestOnce(MODEL, word);
+  if(!res0) return { ok:false, error:"连不上，词库里的词仍然可以查。" };
+  let res = res0;
   if(res.status === 404 && allowRetry && await resolveModel()){
     return callGemini(word, false);
+  }
+  // 503 是模型过载，临时现象：等一下重来，同一个还堵就换个候选模型。
+  if(res.status === 503 && allowRetry){
+    const alts = [MODEL, ...MODEL_FALLBACKS.filter(m => m !== MODEL)];
+    for(const m of alts){
+      await new Promise(r => setTimeout(r, 1500));
+      const again = await requestOnce(m, word);
+      if(again && again.status !== 503){ res = again; break; }
+    }
   }
   if(res.status === 401 || res.status === 403) return { ok:false, error:"密钥无效或已过期，去设置里换一个。" };
   if(res.status === 429) return { ok:false, error:"今日免费额度用完了，明天再试。" };
