@@ -52,6 +52,16 @@
     line-height: 1;
   }
   .masthead h1 span { color: var(--clove); }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tabs .tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.08em;
+    padding: 7px 14px; border: 1.5px solid var(--ink);
+    background: transparent; color: var(--ink);
+    cursor: pointer; border-radius: 2px;
+  }
+  .tabs .tab.on { background: var(--ink); color: var(--paper); }
   .masthead .sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -242,6 +252,13 @@
     <div class="sub" id="deckname">词库 · 本对话</div>
   </div>
 
+  <nav class="tabs">
+    <button class="tab on" data-view="card">卡片</button>
+    <button class="tab" data-view="dict">词典</button>
+    <button class="tab" data-view="timeline">日历</button>
+  </nav>
+
+  <div id="viewCard">
   <div class="controls" id="cats"></div>
 
   <div class="meter">
@@ -274,6 +291,11 @@
   </div>
 
   <div class="foot">← → 切换 · 空格翻面 · 1 再练 · 2 记住</div>
+  </div>
+
+  <div id="viewDict" hidden></div>
+  <div id="viewTimeline" hidden></div>
+
   <div class="tools-row">
     <button class="reset-btn" id="knownlist">已掌握列表 (<span id="knownCount">0</span>)</button>
     <button class="reset-btn" id="syncBtn">同步：<span id="syncStatus">未设置</span></button>
@@ -2138,12 +2160,27 @@ document.addEventListener("keydown", e=>{
     if(e.key==="Escape") $("modalOverlay").classList.remove("show");
     return;
   }
+  if($("viewCard").hidden) return;
   if(e.key===" "){ e.preventDefault(); card.classList.toggle("flip"); }
   if(e.key==="ArrowRight") go(1);
   if(e.key==="ArrowLeft") go(-1);
   if(e.key==="1"){ go(1); }
   if(e.key==="2"){ markKnown(); }
 });
+
+function showView(name){
+  for(const el of document.querySelectorAll(".tabs .tab")){
+    el.classList.toggle("on", el.dataset.view === name);
+  }
+  $("viewCard").hidden = name !== "card";
+  $("viewDict").hidden = name !== "dict";
+  $("viewTimeline").hidden = name !== "timeline";
+  if(name === "dict") renderDict();
+  if(name === "timeline") renderTimeline();
+}
+for(const el of document.querySelectorAll(".tabs .tab")){
+  el.addEventListener("click", ()=> showView(el.dataset.view));
+}
 
 cats(); filter();
 const savedSyncCode = localStorage.getItem(SYNC_CODE_KEY);
