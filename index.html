@@ -136,9 +136,10 @@
 
   .keyrow { margin-top: 16px; border-top: 1px solid var(--paper-2); padding-top: 14px; }
   .keyrow label { display: block; font-size: 13px; margin-bottom: 6px; }
-  .keyrow input {
+  .keyrow input, .keyrow select {
     width: 100%; padding: 9px 10px; border: 1.5px solid var(--ink);
     background: var(--paper-2); color: var(--ink); border-radius: 2px; margin-bottom: 8px;
+    font-family: 'Inter', system-ui, sans-serif; font-size: 14px;
   }
   .keyrow button {
     padding: 7px 14px; border: 1.5px solid var(--ink); background: var(--ink);
@@ -444,6 +445,12 @@
           建，不用绑卡。填了之后会跟同步码一起存，换设备不用再填。
         </div>
         <div id="apiKeyState" class="keyhint"></div>
+        <label for="modelSelect" style="margin-top:14px">查词用的模型</label>
+        <select id="modelSelect"></select>
+        <div class="keyhint">
+          免费额度是按模型分开算的，一个用完了换一个还能查。lite 系列额度更宽，
+          查单词够用。某个模型报额度用尽时，App 会自动往下试其他模型。
+        </div>
       </div>
     </div>
   </div>
@@ -2008,6 +2015,11 @@ async function connectSync(code){
     $("knownCount").textContent = known.size;
     $("syncStatus").textContent = "已连接";
     setSyncState(`已连接，同步码：${code}`);
+    const remoteModel = snap.exists() ? (snap.data().model || "") : "";
+    if(remoteModel && !localStorage.getItem(MODEL_KEY)){
+      MODEL = remoteModel;
+      localStorage.setItem(MODEL_KEY, MODEL);
+    }
     const remoteKey = snap.exists() ? (snap.data().apiKey || "") : "";
     if(remoteKey && !apiKey){ apiKey = remoteKey; localStorage.setItem(APIKEY_KEY, apiKey); }
     else if(apiKey && !remoteKey){ await setDoc(syncRef, { apiKey }, { merge: true }); }
@@ -2130,18 +2142,21 @@ async function attachLexiconSync(){
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// 问一次可用模型清单，按候选顺序挑第一个能用的，挑中就记下来。
-async function resolveModel(){
-  let list;
+// 这个密钥下能做 generateContent 的模型，按 API 返回的顺序。
+async function listUsableModels(){
   try {
     const res = await fetch(API_BASE, { headers: { "x-goog-api-key": apiKey } });
-    if(!res.ok) return null;
-    list = (await res.json()).models || [];
-  } catch(e){ return null; }
-  const usable = new Set(
-    list.filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
-        .map(m => String(m.name).replace(/^models\//, ""))
-  );
+    if(!res.ok) return [];
+    return ((await res.json()).models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map(m => String(m.name).replace(/^models\//, ""));
+  } catch(e){ return []; }
+}
+
+// 首选模型不可用时，按候选顺序挑第一个能用的，挑中就记下来。
+async function resolveModel(){
+  const usable = new Set(await listUsableModels());
+  if(!usable.size) return null;
   const picked = MODEL_FALLBACKS.find(m => usable.has(m))
     || [...usable].find(m => m.includes("flash"));
   if(!picked || picked === MODEL) return null;
@@ -2168,17 +2183,22 @@ async function callGemini(word, allowRetry = true){
   if(res.status === 404 && allowRetry && await resolveModel()){
     return callGemini(word, false);
   }
-  // 503 是模型过载，临时现象：等一下重来，同一个还堵就换个候选模型。
-  if(res.status === 503 && allowRetry){
-    const alts = [MODEL, ...MODEL_FALLBACKS.filter(m => m !== MODEL)];
+  // 503 是模型过载，429 是这个模型的配额用尽。两种都是换个模型就可能成功：
+  // 免费档的配额是按模型分开算的。不把换到的模型记下来，明天首选模型的配额会恢复。
+  if((res.status === 503 || res.status === 429) && allowRetry){
+    const overloaded = res.status === 503;
+    const wait = overloaded ? 1500 : 0;
+    // 过载值得对同一个模型再试一次；配额用尽不值得，换模型才有用。
+    const alts = overloaded ? [MODEL, ...MODEL_FALLBACKS.filter(x => x !== MODEL)]
+                            : MODEL_FALLBACKS.filter(x => x !== MODEL);
     for(const m of alts){
-      await new Promise(r => setTimeout(r, 1500));
+      if(wait) await new Promise(r => setTimeout(r, wait));
       const again = await requestOnce(m, word);
-      if(again && again.status !== 503){ res = again; break; }
+      if(again && again.status !== 503 && again.status !== 429){ res = again; break; }
     }
   }
   if(res.status === 401 || res.status === 403) return { ok:false, error:"密钥无效或已过期，去设置里换一个。" };
-  if(res.status === 429) return { ok:false, error:"今日免费额度用完了，明天再试。" };
+  if(res.status === 429) return { ok:false, error:"几个模型的免费额度都用完了，明天再试，或者在设置里换一个模型。" };
   if(!res.ok){
     let detail = "";
     try {
@@ -2354,8 +2374,24 @@ $("syncBtn").onclick = ()=>{
   setSyncState(syncRef ? `已连接，同步码：${localStorage.getItem(SYNC_CODE_KEY)}` : "");
   $("apiKeyInput").value = "";
   $("apiKeyState").textContent = apiKey ? `已保存，尾号 ${apiKey.slice(-4)}` : "未设置";
+  fillModelSelect(MODEL_FALLBACKS);
+  if(apiKey) listUsableModels().then(ms => { if(ms.length) fillModelSelect(ms); });
   $("syncModalOverlay").classList.add("show");
 };
+function fillModelSelect(models){
+  const sel = $("modelSelect");
+  const options = [...new Set([MODEL, ...models])];
+  sel.innerHTML = options.map(m =>
+    `<option value="${esc(m)}"${m === MODEL ? " selected" : ""}>${esc(m)}</option>`
+  ).join("");
+}
+
+$("modelSelect").onchange = ()=>{
+  MODEL = $("modelSelect").value;
+  localStorage.setItem(MODEL_KEY, MODEL);
+  if(syncRef) setDoc(syncRef, { model: MODEL }, { merge: true }).catch(()=>{});
+};
+
 $("apiKeySave").onclick = ()=>{
   const v = $("apiKeyInput").value.trim();
   if(!v){ $("apiKeyState").textContent = "没填内容。"; return; }
