@@ -2057,9 +2057,15 @@ const APIKEY_KEY = "kosakata-api-key";
 // 首选模型。Google 会停用旧模型，所以下面留了一份候选清单，
 // 真被停用时 resolveModel() 去问一次可用清单，挑一个能用的换上。
 const MODEL_KEY = "kosakata-model";
+// 查词只需要纯文本 + 结构化 JSON 输出。这份白名单是确定能干这活的通用对话模型，
+// 按「先好后省」排；换模型和下拉选项都只在这个范围里走。
+// 刻意排除：图像、语音、音乐、转写、机器人、computer-use、deep-research 这些专用模型，
+// 它们也报 generateContent，但不适合这个用途。
 const MODEL_FALLBACKS = [
   "gemini-3.6-flash", "gemini-flash-latest", "gemini-3.5-flash",
-  "gemini-3-flash-preview", "gemini-2.5-flash"
+  "gemini-3-flash-preview", "gemini-2.5-flash",
+  "gemini-3.5-flash-lite", "gemini-flash-lite-latest",
+  "gemini-3.1-flash-lite", "gemini-2.5-flash-lite"
 ];
 let MODEL = localStorage.getItem(MODEL_KEY) || MODEL_FALLBACKS[0];
 
@@ -2157,8 +2163,9 @@ async function listUsableModels(){
 async function resolveModel(){
   const usable = new Set(await listUsableModels());
   if(!usable.size) return null;
+  const specialized = /image|tts|audio|transcribe|robotics|computer-use|deep-research|lyria|banana|omni/;
   const picked = MODEL_FALLBACKS.find(m => usable.has(m))
-    || [...usable].find(m => m.includes("flash"));
+    || [...usable].find(m => m.includes("flash") && !specialized.test(m));
   if(!picked || picked === MODEL) return null;
   MODEL = picked;
   localStorage.setItem(MODEL_KEY, picked);
@@ -2376,11 +2383,14 @@ $("syncBtn").onclick = ()=>{
   $("apiKeyState").textContent = apiKey ? `已保存，尾号 ${apiKey.slice(-4)}` : "未设置";
   fillModelSelect(MODEL_FALLBACKS);
   if(apiKey) listUsableModels().then(ms => { if(ms.length) fillModelSelect(ms); });
+
   $("syncModalOverlay").classList.add("show");
 };
+// models 是 API 说这个密钥能用的全部模型；只留白名单里的那些。
 function fillModelSelect(models){
   const sel = $("modelSelect");
-  const options = [...new Set([MODEL, ...models])];
+  const allowed = MODEL_FALLBACKS.filter(m => models.includes(m));
+  const options = [...new Set([MODEL, ...(allowed.length ? allowed : MODEL_FALLBACKS)])];
   sel.innerHTML = options.map(m =>
     `<option value="${esc(m)}"${m === MODEL ? " selected" : ""}>${esc(m)}</option>`
   ).join("");
