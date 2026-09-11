@@ -454,7 +454,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {
   normalizeQuery, slugify, findInLexicon, bucketOf, filterByBucket,
-  groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry,
+  groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry, posLabel,
   buildRequestBody, parseGeminiResponse, entryFromResponse
 } from "./dict-core.mjs";
 
@@ -2429,10 +2429,10 @@ function renderEntry(entry, matched, cached){
 
   $("dictResult").innerHTML = `<div class="entry">
     <h2>${esc(entry.root)}${cached ? `<span class="badge">库中 · 第 ${entry.count} 次</span>` : ""}</h2>
-    <div class="meta">${[entry.ipa, entry.pos].filter(Boolean).map(esc).join(" · ")}</div>
+    <div class="meta">${[entry.ipa, posLabel(entry)].filter(Boolean).map(esc).join(" · ")}</div>
     <div class="core">${esc(entry.core)}</div>
     <h3>词根</h3>
-    <div class="meta">${esc(rb.ipa)}</div>
+    <div class="meta">${[rb.ipa, posLabel(entry)].filter(Boolean).map(esc).join(" · ")}</div>
     <div class="core">${esc(rb.zh)}</div>
     ${(rb.phrases || []).map(pair).join("")}
     ${(rb.examples || []).map(pair).join("")}

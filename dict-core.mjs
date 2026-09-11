@@ -133,7 +133,7 @@ export function entryToCard(entry) {
   return {
     t: "root",
     w: entry.root,
-    pos: POS_TAGS.includes(entry.pos) ? entry.pos : "词根",
+    pos: posLabel(entry) || "词根",
     p: entry.ipa ?? "",
     zh: entry.core ?? "",
     c: catsForEntry(entry),
@@ -148,15 +148,25 @@ export function entryToCard(entry) {
   };
 }
 
-// 卡片分类沿用词库原有的一套标签：词性恰好一个，场景零到多个。
+// 卡片分类沿用词库原有的一套标签：词性一到多个（兼类词全列），场景零到多个。
 // 「辨音」是人工挑的易混音练习集，不自动派；「其他」是词性判不出来时的兜底。
 export const POS_TAGS = ["名词", "动词", "形容词", "虚词"];
 export const SCENE_TAGS = ["高频", "工作", "教会", "生活"];
 
+// pos 早期版本存的是单个字符串，现在是数组，两种都要能读。
+export function posList(entry) {
+  const raw = Array.isArray(entry?.pos) ? entry.pos : [entry?.pos];
+  return [...new Set(raw.filter(v => POS_TAGS.includes(v)))];
+}
+
+export function posLabel(entry) {
+  return posList(entry).join(" & ");
+}
+
 export function catsForEntry(entry) {
-  const pos = POS_TAGS.includes(entry?.pos) ? entry.pos : "其他";
+  const pos = posList(entry);
   const scenes = (entry?.scenes ?? []).filter(s => SCENE_TAGS.includes(s));
-  return [pos, ...new Set(scenes)];
+  return [...(pos.length ? pos : ["其他"]), ...new Set(scenes)];
 }
 
 export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典智能助手，精通印尼语 (Bahasa Indonesia) 和中文。
@@ -173,7 +183,7 @@ export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典�
 7. 短语和例句都用 {t, zh} 表示：t 是印尼语原文，zh 是中文翻译。
 8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段填空串和空数组。
 9. notFound 为 false 时，root、ipa、core、rootBlock、ders 每一项都必须有真实内容，不能留空。
-10. pos 是这个原型词的词性，从「名词、动词、形容词、虚词」里选恰好一个。虚词指介词、连词、助词、感叹词这类不作实义成分的词。
+10. pos 是这个原型词的词性，是一个数组，从「名词、动词、形容词、虚词」里选。多数词只有一个词性；确实兼类的词（比如既作形容词又作动词）就都列出来，按主次排序。虚词指介词、连词、助词、感叹词这类不作实义成分的词。
 11. scenes 是这个词最常出现的使用场景，从「高频、工作、教会、生活」里选零到多个：高频指日常最常用的核心词；工作指商务、办公、贸易场合；教会指基督教信仰与教会活动；生活指衣食住行、家庭、身体。判不准就少选，宁缺毋滥。`;
 
 const PAIR = {
@@ -190,7 +200,7 @@ export const RESPONSE_SCHEMA = {
     root: { type: "STRING" },
     ipa: { type: "STRING" },
     core: { type: "STRING" },
-    pos: { type: "STRING", enum: POS_TAGS },
+    pos: { type: "ARRAY", items: { type: "STRING", enum: POS_TAGS } },
     scenes: { type: "ARRAY", items: { type: "STRING", enum: SCENE_TAGS } },
     rootBlock: {
       type: "OBJECT",
@@ -256,7 +266,7 @@ export function entryFromResponse(data, query, model, now = new Date().toISOStri
     query: normalizeQuery(query),
     ipa: data.ipa ?? "",
     core: data.core ?? "",
-    pos: data.pos ?? "",
+    pos: Array.isArray(data.pos) ? data.pos : (data.pos ? [data.pos] : []),
     scenes: data.scenes ?? [],
     rootBlock: data.rootBlock ?? null,
     ders: data.ders ?? [],

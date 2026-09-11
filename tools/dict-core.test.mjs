@@ -5,7 +5,7 @@ import {
   bucketOf, filterByBucket, groupHitsByDate,
   validateEntry, recordHit, mergeLexicons, entryToCard,
   DICT_PROMPT, RESPONSE_SCHEMA, buildRequestBody, parseGeminiResponse, entryFromResponse,
-  catsForEntry
+  catsForEntry, posList, posLabel
 } from "../dict-core.mjs";
 
 test("normalizeQuery 去空白、转小写、压缩空格", () => {
@@ -178,7 +178,7 @@ test("entryToCard 映射字段并截到 4 个衍生词", () => {
     ders: ["mengajar", "ajaran", "pelajar", "pelajaran", "pengajaran"].map(mk),
     derSlugs: []
   };
-  const card = entryToCard({ ...entry, pos: "动词", scenes: ["教会"] });
+  const card = entryToCard({ ...entry, pos: ["动词"], scenes: ["教会"] });
   assert.equal(card.t, "root");
   assert.equal(card.w, "ajar");
   assert.equal(card.p, "ˈa.dʒar");
@@ -259,19 +259,45 @@ test("DICT_PROMPT 明说 ders 不能为空", () => {
 });
 
 test("catsForEntry 词性恰好一个，场景去重且只收合法值", () => {
-  assert.deepEqual(catsForEntry({ pos: "动词", scenes: ["教会","工作","教会"] }), ["动词","教会","工作"]);
-  assert.deepEqual(catsForEntry({ pos: "名词", scenes: [] }), ["名词"]);
-  assert.deepEqual(catsForEntry({ pos: "拟声词", scenes: ["音乐"] }), ["其他"]);
+  assert.deepEqual(catsForEntry({ pos: ["动词"], scenes: ["教会","工作","教会"] }), ["动词","教会","工作"]);
+  assert.deepEqual(catsForEntry({ pos: ["名词"], scenes: [] }), ["名词"]);
+  assert.deepEqual(catsForEntry({ pos: ["拟声词"], scenes: ["音乐"] }), ["其他"]);
   assert.deepEqual(catsForEntry({}), ["其他"]);
+  assert.deepEqual(catsForEntry({ pos: ["形容词","动词"], scenes: ["生活"] }), ["形容词","动词","生活"]);
+  assert.deepEqual(catsForEntry({ pos: "动词" }), ["动词"]);
 });
 
 test("entryToCard 把模型判的词性和场景写进分类", () => {
   const entry = {
-    root: "kerja", ipa: "i", core: "工作", pos: "动词", scenes: ["高频","工作"],
+    root: "kerja", ipa: "i", core: "工作", pos: ["动词"], scenes: ["高频","工作"],
     rootBlock: { zh: "辨析", phrases: [], examples: [] },
     ders: [{ w: "bekerja", ipa: "x", zh: "工作", phrase: { t:"a", zh:"b" }, example: { t:"c", zh:"d" } }]
   };
   const card = entryToCard(entry);
   assert.deepEqual(card.c, ["动词","高频","工作"]);
   assert.equal(card.pos, "动词");
+});
+
+test("posList 兼容旧的字符串写法，去重并剔掉非法值", () => {
+  assert.deepEqual(posList({ pos: ["形容词","动词"] }), ["形容词","动词"]);
+  assert.deepEqual(posList({ pos: "名词" }), ["名词"]);
+  assert.deepEqual(posList({ pos: ["动词","动词","拟声词"] }), ["动词"]);
+  assert.deepEqual(posList({}), []);
+});
+
+test("posLabel 多词性用 & 连接", () => {
+  assert.equal(posLabel({ pos: ["形容词","动词"] }), "形容词 & 动词");
+  assert.equal(posLabel({ pos: ["名词"] }), "名词");
+  assert.equal(posLabel({}), "");
+});
+
+test("entryToCard 的 pos 字段带上全部词性", () => {
+  const entry = {
+    root: "malu", ipa: "ˈma.lu", core: "害羞", pos: ["形容词","动词"], scenes: ["生活"],
+    rootBlock: { zh: "辨析", phrases: [], examples: [] },
+    ders: [{ w: "pemalu", ipa: "x", zh: "害羞的人", phrase: { t:"a", zh:"b" }, example: { t:"c", zh:"d" } }]
+  };
+  const card = entryToCard(entry);
+  assert.equal(card.pos, "形容词 & 动词");
+  assert.deepEqual(card.c, ["形容词","动词","生活"]);
 });
