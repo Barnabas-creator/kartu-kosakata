@@ -69,6 +69,16 @@
     padding: 10px 12px; border: 1.5px solid var(--ink);
     background: var(--paper-2); color: var(--ink); border-radius: 2px;
   }
+  .dictbar input { padding-right: 36px; }
+  .dictbar input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+  .dictfield { flex: 1; position: relative; display: flex; }
+  .dictfield input { width: 100%; }
+  .dictbar .dictclear {
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; padding: 0; border: none;
+    background: none; color: var(--mute); font-size: 18px; line-height: 1;
+  }
+  .dictbar .dictclear[hidden] { display: none; }
   .dictbar button {
     padding: 10px 18px; border: 1.5px solid var(--ink);
     background: var(--ink); color: var(--paper);
@@ -386,7 +396,10 @@
 
   <div id="viewDict">
     <div class="dictbar">
-      <input id="dictInput" type="search" placeholder="输入一个印尼语词" autocomplete="off">
+      <div class="dictfield">
+        <input id="dictInput" type="search" placeholder="输入一个印尼语词" autocomplete="off">
+        <button id="dictClear" class="dictclear" type="button" aria-label="清空" hidden>✕</button>
+      </div>
       <button id="dictGo">查</button>
     </div>
     <div id="dictMsg" class="dictmsg" hidden></div>
@@ -2526,6 +2539,12 @@ async function doLookup(){
 
 $("dictGo").addEventListener("click", doLookup);
 $("dictInput").addEventListener("keydown", e => { if(e.key === "Enter") doLookup(); });
+$("dictInput").addEventListener("input", () => { $("dictClear").hidden = !$("dictInput").value; });
+$("dictClear").addEventListener("click", () => {
+  $("dictInput").value = "";
+  $("dictClear").hidden = true;
+  $("dictInput").focus();
+});
 for(const el of document.querySelectorAll(".libfilters .lf")){
   el.addEventListener("click", ()=>{
     libBucket = el.dataset.b;
