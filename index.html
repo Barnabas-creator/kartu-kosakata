@@ -236,7 +236,11 @@
     text-align: center; font-size: 12px; color: var(--mute);
     margin-top: 6px; margin-bottom: auto;
   }
-  .pron:last-of-type { margin-bottom: auto; }
+  /* 正面：词块上方和提示行上方各一份弹性空白，词块才居中；
+     不能挂在 posF 上，普通卡片的 posF 是隐藏的。 */
+  .front .tag, .front .posF { margin-bottom: 0; }
+  .front .word { margin-top: auto; }
+  .front .hint { margin-top: auto; }
   .hint {
     text-align: center; font-size: 11px; color: var(--mute);
     font-family: 'JetBrains Mono', monospace; letter-spacing: .08em;
