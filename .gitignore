@@ -4,3 +4,5 @@ desktop.ini
 *.log
 .vscode/
 .idea/
+tools/prefetch-src/*.txt
+tools/prefetch-out/
