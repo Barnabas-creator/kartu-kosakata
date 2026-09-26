@@ -6,3 +6,4 @@ desktop.ini
 .idea/
 tools/prefetch-src/*.txt
 tools/prefetch-out/
+tools/prefetch-src/ayt/

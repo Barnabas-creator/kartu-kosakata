@@ -4,7 +4,7 @@
 // 用法：GEMINI_API_KEY=AQ.xxx node tools/prefetch.mjs [--limit=N] [--rpm=N]
 //
 // 断点续跑：已查过的词记在 prefetch-out/_state.json，重跑自动跳过。
-// 词根表：tools/prefetch-src/roots-ranked.tsv（rank_roots.py 生成）。
+// 词根表：tools/prefetch-src/roots-ranked.tsv（rank_roots.py）+ bible-roots-ranked.tsv（rank_bible.py，AYT 译本）。
 // 查询词若已落在某条已存条目的 derSlugs 里（例如先查了 ajar，后面轮到 belajar 还原出的词根），
 // 直接跳过，不重复花额度——跟 App 里「先查词库再调 AI」是同一个原则。
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
@@ -16,7 +16,9 @@ import {
 } from "../dict-core.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SRC = join(here, "prefetch-src", "roots-ranked.tsv");
+// 查询队列：圣经词根（前 4000 之外、圣经出现 ≥3 次）在前，词频前 4000 在后。
+// 由 roots-ranked.tsv 与 bible-roots-ranked.tsv 合成，见 prefetch-src/。
+const SRC = join(here, "prefetch-src", "queue.txt");
 const OUT = join(here, "prefetch-out");
 const STATE = join(OUT, "_state.json");
 
