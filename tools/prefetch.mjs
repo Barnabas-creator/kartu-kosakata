@@ -38,6 +38,8 @@ const exhausted = new Set();
 
 mkdirSync(OUT, { recursive: true });
 const state = existsSync(STATE) ? JSON.parse(readFileSync(STATE, "utf8")) : {};
+// 上一轮出错或格式不合格的词（模型偶发的坏 JSON、缺字段）每次重跑都再给一次机会。
+for (const [w, v] of Object.entries(state)) if (/^(error|invalid):/.test(v)) delete state[w];
 const saveState = () => writeFileSync(STATE, JSON.stringify(state, null, 1));
 
 const entries = readdirSync(OUT).filter(f => f.endsWith(".json") && !f.startsWith("_"))
