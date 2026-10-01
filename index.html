@@ -266,6 +266,20 @@
   .der .dz { display: block; color: var(--ink); }
   .der .dx { display: block; margin-top: 2px; font-size: 12.5px; color: var(--moss); }
 
+  /* 朗读按钮：卡片正面右上角一个大的，其余跟在印尼语文字后面的小的 */
+  .say {
+    border: none; background: none; padding: 0 2px; margin-left: 4px;
+    font-size: 15px; line-height: 1; cursor: pointer; vertical-align: middle;
+    opacity: .75;
+  }
+  .say:active { opacity: 1; transform: scale(.92); }
+  .front { position: relative; }
+  .front .say-main {
+    position: absolute; top: 18px; right: 18px; margin: 0;
+    width: 40px; height: 40px; font-size: 22px; opacity: .85;
+  }
+  .say-tip { font-size: 12px; color: var(--mute); text-align: center; margin-top: 6px; }
+
   .nav { display: flex; gap: 8px; }
   .btn {
     flex: 1; padding: 13px 10px; border: 1.5px solid var(--ink);
@@ -384,6 +398,7 @@
     <div class="card" id="card">
       <div class="face front">
         <div class="tag" id="tagF">—</div>
+        <button class="say say-main" id="sayW" type="button" aria-label="朗读">🔊</button>
         <div class="word" id="w">—</div>
         <div class="pron" id="p">—</div>
         <div class="posF" id="posF" hidden></div>
@@ -490,6 +505,7 @@ import {
   groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry, posLabel,
   buildRequestBody, parseGeminiResponse, entryFromResponse
 } from "./dict-core.mjs";
+import { createTts } from "./tts.mjs";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDqL_KE6biXwcf_5KZ1i8xj3SCuZRXWppo",
@@ -2306,6 +2322,26 @@ function filter(){
   idx = 0; render();
 }
 
+// 朗读：系统自带语音（Web Speech API），模块与「印尼语学习」App 同一份，安卓/iOS 的坑注释在 tts.mjs。
+const tts = window.speechSynthesis
+  ? createTts({ synth: window.speechSynthesis, VoiceUtterance: window.SpeechSynthesisUtterance })
+  : null;
+const sayBtn = text => (tts && text)
+  ? `<button class="say" type="button" data-say="${esc(text)}" aria-label="朗读">🔊</button>` : "";
+// 衍生词例句是「印尼语 中文」混在一个字段里，只读到第一个汉字之前。
+const indoPart = s => String(s ?? "").split(/[\u3400-\u9fff\uff00-\uffef]/)[0].trim();
+// 没装印尼语音色时会用系统默认音色硬读，提示一下怎么装。
+const voiceTip = () => (tts && !tts.hasIndonesianVoice())
+  ? `<div class="say-tip">听不到印尼语发音？安卓到「设置 → 文字转语音 → Google 语音服务」下载印尼语语音包。</div>` : "";
+// 捕获阶段拦截：朗读按钮在卡片里，不拦的话点一下会顺带把卡片翻面。
+document.addEventListener("click", e => {
+  const el = e.target.closest?.("[data-say]");
+  if(!el) return;
+  e.stopPropagation();
+  tts?.speak(el.dataset.say);
+}, true);
+if(!tts) document.getElementById("sayW").hidden = true;
+
 function render(){
   $("knownCount").textContent = known.size;
   $("score").textContent = `已掌握 ${known.size}`;
@@ -2315,6 +2351,7 @@ function render(){
     $("tagB").textContent = cat;
     const inScope = deck.some(inCat);
     $("w").textContent = inScope ? "🎉" : "—";
+    $("sayW").hidden = true;
     $("p").textContent = "";
     $("zh").textContent = inScope ? "这个分类的词你都记住了！" : "这个组合下没有卡片。";
     $("detail").innerHTML = inScope
@@ -2328,6 +2365,8 @@ function render(){
   card.classList.remove("flip");
   const d = view[idx];
   $("w").textContent = d.w;
+  $("sayW").dataset.say = d.w;
+  $("sayW").hidden = false;
   $("p").textContent = d.p;
   const posText = d.t === "root" ? (d.pos || "") : "";
   $("posF").textContent = posText;
@@ -2338,13 +2377,13 @@ function render(){
   $("zh").textContent = d.zh;
   const [ind, chn] = d.ex.split("|");
   const row = (label, val) => `<div class="row"><b>${label}</b><i>${val}</i></div>`;
-  const exBlock = `<div class="ex"><em>${ind}</em>${chn}</div>`;
+  const exBlock = `<div class="ex"><em>${ind}${sayBtn(ind)}</em>${chn}</div>`;
   $("detail").innerHTML = d.t === "phrase"
     ? row("直译", d.lit) + (d.note ? row("提示", d.note) : "") + exBlock
     : row("词性", d.pos)
       + ((d.der || []).length
           ? `<div class="der-grid">` + d.der.map(x =>
-              `<div class="der"><span class="dw">${x.w}</span><span class="dz">${x.zh}</span><span class="dx">${x.ex}</span></div>`
+              `<div class="der"><span class="dw">${x.w}${sayBtn(x.w)}</span><span class="dz">${x.zh}</span><span class="dx">${x.ex}${sayBtn(indoPart(x.ex))}</span></div>`
             ).join("") + `</div>`
           : "")
       + (d.syn ? row("辨析", d.syn) : "")
@@ -2489,18 +2528,18 @@ function renderToCardBox(entry){
 
 function renderEntry(entry, matched, cached){
   const rb = entry.rootBlock || {};
-  const pair = o => `<div class="line">${esc(o.t)} <i>${esc(o.zh)}</i></div>`;
+  const pair = o => `<div class="line">${esc(o.t)}${sayBtn(o.t)} <i>${esc(o.zh)}</i></div>`;
   const ders = (entry.ders || []).map(d => {
     const on = normalizeQuery(d.w) === normalizeQuery(matched) ? " hit" : "";
     return `<div class="der${on}">
-      <b>${esc(d.w)}</b> <i>${esc(d.ipa)}</i><br>${esc(d.zh)}
-      <div class="line">${esc(d.phrase?.t)} <i>${esc(d.phrase?.zh)}</i></div>
-      <div class="line">${esc(d.example?.t)} <i>${esc(d.example?.zh)}</i></div>
+      <b>${esc(d.w)}</b>${sayBtn(d.w)} <i>${esc(d.ipa)}</i><br>${esc(d.zh)}
+      <div class="line">${esc(d.phrase?.t)}${sayBtn(d.phrase?.t)} <i>${esc(d.phrase?.zh)}</i></div>
+      <div class="line">${esc(d.example?.t)}${sayBtn(d.example?.t)} <i>${esc(d.example?.zh)}</i></div>
     </div>`;
   }).join("");
 
   $("dictResult").innerHTML = `<div class="entry">
-    <h2>${esc(entry.root)}${cached ? `<span class="badge">库中 · 第 ${entry.count} 次</span>` : ""}</h2>
+    <h2>${esc(entry.root)}${sayBtn(entry.root)}${cached ? `<span class="badge">库中 · 第 ${entry.count} 次</span>` : ""}</h2>
     <div class="meta">${[entry.ipa, posLabel(entry)].filter(Boolean).map(esc).join(" · ")}</div>
     <div class="core">${esc(entry.core)}</div>
     <h3>词根</h3>
@@ -2511,7 +2550,7 @@ function renderEntry(entry, matched, cached){
     <h3>衍生词</h3>
     ${ders}
     <div id="toCardBox"></div>
-  </div>`;
+  </div>${voiceTip()}`;
   renderToCardBox(entry);
 }
 
