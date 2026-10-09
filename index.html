@@ -122,6 +122,13 @@
   }
   .libitem b { font-size: 15px; }
   .libitem span { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); }
+  .zhhead { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mute); margin-bottom: 4px; }
+  .zhitem span { font-family: inherit; font-size: 13px; text-align: right; margin-left: 12px; }
+  .zhitem em { font-style: normal; color: var(--moss); font-size: 11px; margin-left: 6px; }
+  .zhai {
+    margin-top: 12px; padding: 8px 12px; border: 1px solid var(--ink); background: transparent;
+    color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 12px; cursor: pointer; border-radius: 2px;
+  }
 
   .tocard { margin-top: 18px; border-top: 1px solid var(--ink); padding-top: 12px; }
   .tocard .catnote { font-size: 12px; color: var(--mute); margin-left: 10px; }
@@ -425,7 +432,7 @@
   <div id="viewDict">
     <div class="dictbar">
       <div class="dictfield">
-        <input id="dictInput" type="search" placeholder="输入一个印尼语词" autocomplete="off">
+        <input id="dictInput" type="search" placeholder="印尼语词，或中文" autocomplete="off">
         <button id="dictClear" class="dictclear" type="button" aria-label="清空" hidden>✕</button>
       </div>
       <button id="dictGo">查</button>
@@ -503,7 +510,8 @@ import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs } fr
 import {
   normalizeQuery, slugify, findInLexicon, bucketOf, filterByBucket,
   groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry, posLabel,
-  buildRequestBody, parseGeminiResponse, entryFromResponse
+  buildRequestBody, parseGeminiResponse, entryFromResponse,
+  hasHan, zhRowsFromEntry, searchZh, buildZhRequestBody
 } from "./dict-core.mjs";
 import { createTts } from "./tts.mjs";
 
@@ -2214,23 +2222,24 @@ async function resolveModel(){
   return picked;
 }
 
-async function requestOnce(model, word){
+async function requestOnce(model, body){
   try {
     return await fetch(`${API_BASE}/${model}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify(buildRequestBody(word))
+      body: JSON.stringify(body)
     });
   } catch(e){ return null; }
 }
 
-async function callGemini(word, allowRetry = true){
+// body 默认是查印尼语词的请求；中文反查传 buildZhRequestBody 的结果。
+async function callGemini(word, allowRetry = true, body = buildRequestBody(word)){
   if(!apiKey) return { ok:false, error:"NOKEY" };
-  const res0 = await requestOnce(MODEL, word);
+  const res0 = await requestOnce(MODEL, body);
   if(!res0) return { ok:false, error:"连不上，词库里的词仍然可以查。" };
   let res = res0;
   if(res.status === 404 && allowRetry && await resolveModel()){
-    return callGemini(word, false);
+    return callGemini(word, false, body);
   }
   // 503 是模型过载，429 是这个模型的配额用尽。两种都是换个模型就可能成功：
   // 免费档的配额是按模型分开算的。不把换到的模型记下来，明天首选模型的配额会恢复。
@@ -2242,7 +2251,7 @@ async function callGemini(word, allowRetry = true){
                             : MODEL_FALLBACKS.filter(x => x !== MODEL);
     for(const m of alts){
       if(wait) await new Promise(r => setTimeout(r, wait));
-      const again = await requestOnce(m, word);
+      const again = await requestOnce(m, body);
       if(again && again.status !== 503 && again.status !== 429){ res = again; break; }
     }
   }
@@ -2283,6 +2292,29 @@ async function lookupBase(q){
     const entry = await res.json();
     return validateEntry(entry).length ? null : entry;
   } catch(e){ return null; }
+}
+
+// 中文反查：底库的义项行（dict/zh-index.json，约 1.2 MB，gzip 后约 400 KB）第一次输中文时下载一次，
+// 个人词库的行每次现算（词库会变）。个人词库的词序号记 -1，平手时排在底库前面。
+let baseZhRows = null;
+async function lookupZh(q){
+  if(!baseZhRows){
+    try {
+      const res = await fetch("dict/zh-index.json");
+      baseZhRows = res.ok ? await res.json() : [];
+    } catch(e){ baseZhRows = []; }
+  }
+  const own = lexicon.flatMap(e => zhRowsFromEntry(e, -1));
+  return searchZh([...own, ...baseZhRows], q);
+}
+
+async function askZh(q){
+  const out = await callGemini(q, true, buildZhRequestBody(q));
+  if(!out.ok) return out;
+  const list = (out.data.candidates || [])
+    .map(c => ({ word: normalizeQuery(c.w), gloss: String(c.zh || "") }))
+    .filter(c => c.word);
+  return { ok:true, list };
 }
 
 async function lookup(rawQuery){
@@ -2604,12 +2636,45 @@ function renderDict(){
   renderLibrary();
 }
 
+const NOKEY_MSG = "还没填 Gemini API 密钥。去底部的同步设置里填一个，免费密钥在 aistudio.google.com/apikey 建。";
+
+// 中文候选列表：点一个就把这个印尼语词当普通查询走一遍（个人词库 → 底库 → Gemini）。
+function renderZhList(q, list, fromAi){
+  const items = list.map(h => `<div class="libitem zhitem" data-w="${esc(h.word)}">
+      <b>${esc(h.word)}${h.root && h.root !== h.word ? `<em>← ${esc(h.root)}</em>` : ""}</b>
+      <span>${esc(h.gloss)}</span></div>`).join("");
+  $("dictResult").innerHTML = `<div class="zhhead">「${esc(q)}」${fromAi ? "· AI 给的候选" : `· 词典里 ${list.length} 个`}</div>
+    ${items || `<div class="dictmsg">${fromAi ? "AI 也没给出对应的印尼语词。" : "词典里没有。"}</div>`}
+    ${fromAi ? "" : `<button class="zhai" type="button">问 AI：「${esc(q)}」印尼语怎么说</button>`}`;
+  for(const el of $("dictResult").querySelectorAll(".zhitem")){
+    el.addEventListener("click", ()=>{
+      $("dictInput").value = el.dataset.w;
+      $("dictClear").hidden = false;
+      doLookup();
+      window.scrollTo(0, 0);
+    });
+  }
+  $("dictResult").querySelector(".zhai")?.addEventListener("click", async ()=>{
+    dictMsg("问 AI 中…");
+    const out = await askZh(q);
+    if(!out.ok){ dictMsg(out.error === "NOKEY" ? NOKEY_MSG : out.error); return; }
+    dictMsg("");
+    renderZhList(q, out.list, true);
+  });
+}
+
 async function doLookup(){
   const q = $("dictInput").value;
+  if(hasHan(q)){
+    const zq = q.replace(/\s+/g, "");
+    dictMsg("");
+    renderZhList(zq, await lookupZh(zq), false);
+    return;
+  }
   dictMsg("查询中…");
   const out = await lookup(q);
   if(out.status === "error" && out.message === "NOKEY"){
-    dictMsg("还没填 Gemini API 密钥。去底部的同步设置里填一个，免费密钥在 aistudio.google.com/apikey 建。");
+    dictMsg(NOKEY_MSG);
     return;
   }
   if(out.status === "error" || out.status === "notfound"){ dictMsg(out.message); return; }

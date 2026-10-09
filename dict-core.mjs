@@ -277,3 +277,105 @@ export function entryFromResponse(data, query, model, now = new Date().toISOStri
     createdAt: now
   };
 }
+
+// ── 中文反查 ──────────────────────────────────────────────
+// 中文释义按标点拆成义项，每个义项记一行 [义项, 印尼词, 词根, 类型, 词频序]。
+// 类型 0 = 词根释义，1 = 衍生词释义。短语释义不收：收了索引大一倍（gzip 后约 800 KB），
+// 查短语（如「永生」）交给 Gemini。离线底库的行由 tools/build-dict.mjs 预先生成到 dict/zh-index.json，个人词库的行在前端现算。
+
+export const ZH_ROOT = 0, ZH_DER = 1;
+
+export function hasHan(s) {
+  return /\p{Script=Han}/u.test(String(s ?? ""));
+}
+
+export function splitGlosses(zh) {
+  return String(zh ?? "")
+    .replace(/[（(][^）)]*[）)]/g, "")
+    .split(/[，,；;、\/|]/)
+    .map(s => s.replace(/[。.…\s]/g, ""))
+    .filter(s => hasHan(s));
+}
+
+export function zhRowsFromEntry(entry, rank = 0) {
+  const root = normalizeQuery(entry?.root);
+  if (!root) return [];
+  const rows = [];
+  const seen = new Set();
+  const add = (zh, word, kind) => {
+    const w = normalizeQuery(word);
+    if (!w) return;
+    for (const g of splitGlosses(zh)) {
+      const k = `${g}|${w}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      rows.push([g, w, root, kind, rank]);
+    }
+  };
+  add(entry.core, root, ZH_ROOT);
+  add(entry.rootBlock?.zh, root, ZH_ROOT);
+  for (const d of entry.ders ?? []) add(d.zh, d.w, normalizeQuery(d.w) === root ? ZH_ROOT : ZH_DER);
+  return rows;
+}
+
+// 义项完全相同 > 开头相同 > 包含；同档里词根先于衍生词，再按义项短、词频高排。
+// 「永恒的」「慢慢地」这类带的/地的义项，去掉词尾再比也算完全相同。
+function zhScore(gloss, q) {
+  if (gloss === q || gloss.replace(/[的地得]$/, "") === q) return 3;
+  if (gloss.startsWith(q)) return 2;
+  if (gloss.includes(q)) return 1;
+  return 0;
+}
+
+export function searchZh(rows, query, limit = 30) {
+  const q = String(query ?? "").replace(/\s+/g, "");
+  if (!q) return [];
+  const best = new Map();
+  for (const row of rows ?? []) {
+    const [gloss, word, root, kind, rank] = row;
+    const score = zhScore(gloss, q);
+    if (!score) continue;
+    const hit = { word, root, gloss, kind, rank, score };
+    const prev = best.get(word);
+    if (!prev || cmpHit(hit, prev) < 0) best.set(word, hit);
+  }
+  return [...best.values()].sort(cmpHit).slice(0, limit);
+}
+
+function cmpHit(a, b) {
+  return b.score - a.score || a.kind - b.kind || a.gloss.length - b.gloss.length || a.rank - b.rank;
+}
+
+export const ZH_PROMPT = `你是印尼语—中文双语词典助手。用户输入一个中文词或短语，给出最常用的印尼语对应词。
+
+规则：
+1. candidates 按常用程度从高到低，最多 6 个，只收真正对应的词，不要凑数。
+2. w 是印尼语词的原样写法（全小写，短语用空格分开），zh 是这个印尼语词的中文释义，写出和其他候选的区别（语域、用法）。
+3. 输入不是中文或无法翻译时，candidates 返回空数组。`;
+
+export const ZH_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    candidates: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: { w: { type: "STRING" }, zh: { type: "STRING" } },
+        required: ["w", "zh"]
+      }
+    }
+  },
+  required: ["candidates"]
+};
+
+export function buildZhRequestBody(query) {
+  return {
+    systemInstruction: { parts: [{ text: ZH_PROMPT }] },
+    contents: [{ role: "user", parts: [{ text: String(query ?? "").trim() }] }],
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: ZH_RESPONSE_SCHEMA,
+      temperature: 0.2
+    }
+  };
+}
