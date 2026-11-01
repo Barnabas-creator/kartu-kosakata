@@ -17,28 +17,6 @@
 // 保持同步直发，只有真需要等音色/等打断间隔时才异步。
 
 export const CANCEL_GAP_MS = 120;
-
-// 发音校准：系统 TTS 读错的词，送进引擎前换成「引擎会读对」的拼法，界面显示不受影响。
-// 印尼语 e 有 pepet /ə/ 和 taling /e/ 两种读法，拼写上不分，引擎靠词典猜，常猜错。
-// 2026-11-01 用共振峰实测（Google id 与 Microsoft Gadis 两家都错）：
-//   memang 首元音 F2≈2400–2700Hz、130ms+，与 meja 同为 taling；正确是 pepet（KBBI me·mang /məmaŋ/）。
-//   改写 memmang 后 F2≈1150–1200Hz、60–90ms，与 memanggil 的 pepet 一致。
-//   试过无效的：mêmang / mĕmang / məmang（变音符被引擎直接丢掉）；m'mang 只对 Google 有效。
-// 键是整词（不分大小写），值保持原词首字母/全大写的大小写形式。
-const RESPELL = {
-  memang: 'memmang',
-  memangnya: 'memmangnya',
-};
-const RESPELL_RE = new RegExp(`\\b(${Object.keys(RESPELL).join('|')})\\b`, 'gi');
-
-export function respellForTts(text) {
-  return String(text).replace(RESPELL_RE, (w) => {
-    const to = RESPELL[w.toLowerCase()];
-    if (w === w.toUpperCase()) return to.toUpperCase();
-    if (w[0] === w[0].toUpperCase()) return to[0].toUpperCase() + to.slice(1);
-    return to;
-  });
-}
 const VOICES_TIMEOUT_MS = 2000;
 
 export function pickIndonesianVoice(voices) {
@@ -77,7 +55,7 @@ export function createTts({ synth, VoiceUtterance, setTimeoutFn = setTimeout }) 
   }
 
   function utter(text) {
-    const u = new VoiceUtterance(respellForTts(text));
+    const u = new VoiceUtterance(text);
     u.lang = 'id-ID';
     u.rate = 0.9;
     const v = voice();

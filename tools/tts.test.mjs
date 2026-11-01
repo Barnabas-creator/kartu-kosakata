@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTts, pickIndonesianVoice, respellForTts, CANCEL_GAP_MS } from '../tts.mjs';
+import { createTts, pickIndonesianVoice, CANCEL_GAP_MS } from '../tts.mjs';
 
 class FakeUtterance {
   constructor(text) {
@@ -146,20 +146,4 @@ test('speakSequence 被 stop 后不再继续下一条', async () => {
   first.onend();
   await new Promise((r) => setTimeout(r, 5));
   assert.equal(synth.spoken.length, 1);
-});
-
-test('pepet 校准：memang 系列送给引擎时改写成 memmang，大小写和句中位置都照顾到', () => {
-  assert.equal(respellForTts('memang'), 'memmang');
-  assert.equal(respellForTts('Memangnya kamu bisa datang?'), 'Memmangnya kamu bisa datang?');
-  assert.equal(respellForTts('Dia memang orang yang baik.'), 'Dia memmang orang yang baik.');
-  assert.equal(respellForTts('MEMANG'), 'MEMMANG');
-  // 别误伤：memanggil 里的 memang 不是独立词
-  assert.equal(respellForTts('memanggil'), 'memanggil');
-});
-
-test('朗读时实际送进引擎的是校准后的文本', () => {
-  const synth = fakeSynth();
-  const tts = createTts({ synth, VoiceUtterance: FakeUtterance });
-  tts.speak('Memang mahal');
-  assert.equal(synth.spoken[0].text, 'Memmang mahal');
 });
