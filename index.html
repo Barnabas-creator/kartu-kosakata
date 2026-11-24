@@ -138,12 +138,21 @@
   }
   .tocard .done { font-size: 13px; color: var(--moss); }
 
-  .tlday { margin-bottom: 20px; }
-  .tlday h4 {
+  .tlday { margin-bottom: 14px; }
+  .tlday > summary {
     font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    letter-spacing: 0.08em; color: var(--mute);
-    border-bottom: 1px solid var(--ink); padding-bottom: 5px; margin-bottom: 9px;
+    letter-spacing: 0.08em; color: var(--mute); cursor: pointer; list-style: none;
+    border-bottom: 1px solid var(--ink); padding: 6px 0 5px; margin-bottom: 9px;
   }
+  .tlday > summary::-webkit-details-marker, .der > summary::-webkit-details-marker { display: none; }
+  .tlday > summary::before, .libtoggle::before, .der > summary::before {
+    content: "▸"; display: inline-block; width: 1.1em; transition: transform .15s;
+  }
+  .tlday[open] > summary::before, .libtoggle.open::before, .der[open] > summary::before { transform: rotate(90deg); }
+  .tlday:not([open]) > summary { margin-bottom: 0; }
+  .libtoggle { background: none; border: 0; padding: 4px 0; color: inherit; font: inherit; cursor: pointer; }
+  .der > summary { cursor: pointer; list-style: none; }
+  .der > summary::before { color: var(--mute); font-size: 11px; }
   .tlitem {
     display: inline-block; margin: 0 7px 7px 0; padding: 5px 10px;
     border: 1.5px solid var(--moss); border-radius: 2px;
@@ -440,8 +449,8 @@
     <div id="dictMsg" class="dictmsg" hidden></div>
     <div id="dictResult"></div>
     <div class="libhead">
-      <span>词库 <b id="libCount">0</b></span>
-      <div class="libfilters">
+      <button class="libtoggle" id="libToggle" type="button">词库 <b id="libCount">0</b></button>
+      <div class="libfilters" id="libFilters">
         <button class="lf on" data-b="all">全部</button>
         <button class="lf" data-b="1">1 次</button>
         <button class="lf" data-b="2-5">2-5 次</button>
@@ -2440,6 +2449,7 @@ document.addEventListener("click", e => {
   const el = e.target.closest?.("[data-say]");
   if(!el) return;
   e.stopPropagation();
+  e.preventDefault(); // 在折叠标题（summary）里时，别让点朗读顺带开合
   tts?.speak(el.dataset.say);
 }, true);
 if(!tts) document.getElementById("sayW").hidden = true;
@@ -2633,11 +2643,11 @@ function renderEntry(entry, matched, cached){
   const pair = o => `<div class="line">${esc(o.t)}${sayBtn(o.t)} <i>${esc(o.zh)}</i></div>`;
   const ders = (entry.ders || []).map(d => {
     const on = normalizeQuery(d.w) === normalizeQuery(matched) ? " hit" : "";
-    return `<div class="der${on}">
-      <b>${esc(d.w)}</b>${sayBtn(d.w)} <i>${esc(d.ipa)}</i><br>${esc(d.zh)}
+    return `<details class="der${on}"${on ? " open" : ""}>
+      <summary><b>${esc(d.w)}</b>${sayBtn(d.w)} <i>${esc(d.ipa)}</i><br>${esc(d.zh)}</summary>
       <div class="line">${esc(d.phrase?.t)}${sayBtn(d.phrase?.t)} <i>${esc(d.phrase?.zh)}</i></div>
       <div class="line">${esc(d.example?.t)}${sayBtn(d.example?.t)} <i>${esc(d.example?.zh)}</i></div>
-    </div>`;
+    </details>`;
   }).join("");
 
   $("dictResult").innerHTML = `<div class="entry">
@@ -2683,7 +2693,20 @@ function bindSuggest(){
   }
 }
 
+let libOpen = localStorage.getItem("kk.libOpen") === "1";
+function applyLibOpen(){
+  $("libToggle").classList.toggle("open", libOpen);
+  $("libFilters").hidden = !libOpen;
+  $("libList").hidden = !libOpen;
+}
+$("libToggle").addEventListener("click", ()=>{
+  libOpen = !libOpen;
+  localStorage.setItem("kk.libOpen", libOpen ? "1" : "0");
+  applyLibOpen();
+});
+
 function renderLibrary(){
+  applyLibOpen();
   const list = filterByBucket(lexicon, libBucket)
     .slice()
     .sort((a, b) => b.count - a.count || a.root.localeCompare(b.root));
@@ -2792,18 +2815,25 @@ for(const el of document.querySelectorAll(".libfilters .lf")){
   });
 }
 
+let tlOpen = null; // 本次会话里手动展开过的日期；null = 默认只展开最新一天
 function renderTimeline(){
   const groups = groupHitsByDate(lexicon);
   if(!groups.length){
     $("viewTimeline").innerHTML = `<div class="dictmsg">还没查过词。去词典页查第一个。</div>`;
     return;
   }
-  $("viewTimeline").innerHTML = groups.map(g => `<div class="tlday">
-    <h4>${g.date} · ${g.items.length} 词</h4>
+  const open = tlOpen ?? new Set([groups[0].date]);
+  $("viewTimeline").innerHTML = groups.map(g => `<details class="tlday" data-date="${esc(g.date)}"${open.has(g.date) ? " open" : ""}>
+    <summary>${g.date} · ${g.items.length} 词</summary>
     ${g.items.map(i => `<span class="tlitem${i.ai ? " ai" : ""}" data-root="${esc(i.root)}">
       ${i.via ? `${esc(i.via)} <em>→ ${esc(i.root)}</em>` : esc(i.root)}
     </span>`).join("")}
-  </div>`).join("");
+  </details>`).join("");
+  for(const d of $("viewTimeline").querySelectorAll(".tlday")){
+    d.addEventListener("toggle", ()=>{
+      tlOpen = new Set([...$("viewTimeline").querySelectorAll(".tlday[open]")].map(x => x.dataset.date));
+    });
+  }
   for(const el of $("viewTimeline").querySelectorAll(".tlitem")){
     el.addEventListener("click", ()=>{
       const entry = lexicon.find(e => e.root === el.dataset.root);
