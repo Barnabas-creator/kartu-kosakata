@@ -316,3 +316,16 @@ test("提示词点名 meN- 吞音陷阱，温度为 0", () => {
   assert.match(DICT_PROMPT, /angkap/);
   assert.equal(buildRequestBody("x").generationConfig.temperature, 0);
 });
+
+test("nearbyWords 给不存在的词列出各自独立的候选", async () => {
+  const { nearbyWords, soundKey } = await import("../dict-core.mjs");
+  const index = { tangkap: "tangkap", menangkap: "tangkap", anggap: "anggap", menganggap: "anggap", pukul: "pukul", rumah: "rumah" };
+  assert.equal(soundKey("angkap"), soundKey("anggap"));
+  assert.deepEqual(nearbyWords("angkap", index), [
+    { word: "tangkap", root: "tangkap" },
+    { word: "anggap", root: "anggap" }
+  ]);
+  assert.deepEqual(nearbyWords("rumha", index), []);
+  assert.deepEqual(nearbyWords("rumahh", index), [{ word: "rumah", root: "rumah" }]);
+  assert.deepEqual(nearbyWords("tangkap", index), []);
+});

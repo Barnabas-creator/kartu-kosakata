@@ -253,6 +253,51 @@ export function swallowedRootCandidates(query) {
   return ["t", "k", "p", "s"].map(c => c + q);
 }
 
+// 发音相近的拼写归一：清浊不分（k/g、p/b、t/d、c/j、f/v）、ngk/ngg 都当 ng、双写合一。
+// angkap 和 anggap 归一后都是 angab，用来找「记错/听错了的词」。
+export function soundKey(word) {
+  return normalizeQuery(word)
+    .replace(/ng[kg]/g, "ng")
+    .replace(/sy/g, "s").replace(/kh/g, "k")
+    .replace(/[fv]/g, "p")
+    .replace(/k/g, "g").replace(/p/g, "b").replace(/t/g, "d").replace(/c/g, "j")
+    .replace(/(.)\1+/g, "$1");
+}
+
+function withinOneEdit(a, b) {
+  if (a === b) return false;
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, diff = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++diff > 1) return false;
+    if (la > lb) i++; else if (lb > la) j++; else { i++; j++; }
+  }
+  return diff + (la - i) + (lb - j) <= 1;
+}
+
+// 查不到的词（不在底库）可能对应哪些真词。index 是底库 词形→词根 表。
+// 每个词根只出一次，按「补回被吞字母 > 发音相近 > 差一个字母」排，最多 limit 个。
+// 返回 [{ word, root }]，只列候选，不合并任何释义。
+export function nearbyWords(query, index, limit = 6) {
+  const q = normalizeQuery(query);
+  if (!q || !index || index[q]) return [];
+  const out = [], seenRoots = new Set();
+  const add = w => {
+    const root = index[w];
+    if (!root || seenRoots.has(root)) return;
+    seenRoots.add(root);
+    out.push({ word: w, root });
+  };
+  for (const w of swallowedRootCandidates(q)) add(w);
+  const key = soundKey(q);
+  const forms = Object.keys(index);
+  for (const w of forms) if (w !== q && soundKey(w) === key) add(w);
+  if (q.length >= 4) for (const w of forms) if (withinOneEdit(q, w)) add(w);
+  return out.slice(0, limit);
+}
+
 export function parseGeminiResponse(json) {
   const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (typeof text !== "string") return { ok: false, error: "模型没有返回内容" };

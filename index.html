@@ -511,7 +511,7 @@ import {
   normalizeQuery, slugify, findInLexicon, bucketOf, filterByBucket,
   groupHitsByDate, validateEntry, recordHit, mergeLexicons, entryToCard, catsForEntry, posLabel,
   buildRequestBody, parseGeminiResponse, entryFromResponse,
-  hasHan, zhRowsFromEntry, searchZh, buildZhRequestBody, swallowedRootCandidates
+  hasHan, zhRowsFromEntry, searchZh, buildZhRequestBody, nearbyWords
 } from "./dict-core.mjs";
 import { createTts } from "./tts.mjs";
 
@@ -2297,11 +2297,20 @@ async function loadBaseIndex(){
   return baseIndex;
 }
 
-// 「angkap」这种 meN- 吞掉首字母后的残片：底库里有补回字母的词，就先提示，不去问 AI。
-async function swallowedHits(q){
+// 底库里没有的词（angkap）可能是吞了首字母的残片（tangkap）或记错的拼写（anggap）。
+// 列出候选，各带各的释义，让用户自己选；绝不把几个词的意思揉成一条。
+async function nearbyHits(q){
   const idx = await loadBaseIndex();
-  if(!idx || idx[q]) return [];
-  return swallowedRootCandidates(q).filter(w => idx[w]);
+  if(!idx) return [];
+  const list = nearbyWords(q, idx);
+  return Promise.all(list.map(async c => {
+    let gloss = "";
+    try {
+      const res = await fetch(`dict/${encodeURIComponent(c.root)}.json`);
+      if(res.ok) gloss = (await res.json()).core || "";
+    } catch(e){}
+    return { ...c, gloss };
+  }));
 }
 
 async function lookupBase(q){
@@ -2344,6 +2353,11 @@ async function lookup(rawQuery, opts = {}){
   if(!q) return { status:"error", message:"先输入一个词。" };
 
   const hit = findInLexicon(lexicon, q);
+  // 词库里存着 AI 给的、底库没有的词：先看它是不是残片/记错的词，是就只给候选。
+  if(hit && !opts.forceAi && hit.entry.hits?.some(h => h.ai) && await loadBaseIndex() && !baseIndex[q]){
+    const sugg = await nearbyHits(q);
+    if(sugg.length) return { status:"suggest", query: q, words: sugg, stale: hit.entry.root };
+  }
   if(hit){
     const via = normalizeQuery(hit.entry.root) === q ? null : q;
     const updated = recordHit(hit.entry, { via, ai:false });
@@ -2362,7 +2376,7 @@ async function lookup(rawQuery, opts = {}){
   }
 
   if(!opts.forceAi){
-    const sugg = await swallowedHits(q);
+    const sugg = await nearbyHits(q);
     if(sugg.length) return { status:"suggest", query: q, words: sugg };
   }
 
@@ -2649,23 +2663,13 @@ function renderEntry(entry, matched, cached){
     renderLibrary();
     renderTimeline();
   });
-  // 词库里已经存了 AI 编的残片词条（比如 angkap），也提示真词根。
-  swallowedHits(normalizeQuery(entry.root)).then(words => {
-    if(!words.length || !$("dictResult").querySelector(".entry")) return;
-    $("dictResult").querySelector(".entry").insertAdjacentHTML("afterbegin", suggestHtml(entry.root, words));
-    bindSuggest();
-  });
 }
 
 function suggestHtml(q, words){
-  return `<div class="zhhead">「${esc(q)}」可能不是独立的词：meN-/peN- 前缀会吞掉词根开头的 k/p/t/s。你可能要查：</div>
-    ${words.map(w => `<div class="libitem zhitem sugg" data-w="${esc(w)}"><b>${esc(w)}</b><span>meN- + ${esc(w)} → ${esc(meNForm(w))}</span></div>`).join("")}`;
-}
-
-// 只用于提示里的示意：t→n、k→ng、p→m、s→ny。
-function meNForm(w){
-  const map = { t:"men", k:"meng", p:"mem", s:"meny" };
-  return (map[w[0]] || "me") + w.slice(1);
+  return `<div class="zhhead">词典里没有「${esc(q)}」。你可能要查（点一个看详细）：</div>
+    ${words.map(c => `<div class="libitem zhitem sugg" data-w="${esc(c.word)}">
+      <b>${esc(c.word)}${c.root !== c.word ? `<em>← ${esc(c.root)}</em>` : ""}</b>
+      <span>${esc(c.gloss)}</span></div>`).join("")}`;
 }
 
 function bindSuggest(){
@@ -2745,8 +2749,17 @@ async function doLookup(){
   if(out.status === "suggest"){
     dictMsg("");
     $("dictResult").innerHTML = suggestHtml(out.query, out.words)
-      + `<button class="zhai askai" type="button">不是，仍然问 AI：「${esc(out.query)}」</button>`;
+      + `<button class="zhai askai" type="button">都不是，${out.stale ? "看词库里存的旧 AI 结果" : `仍然问 AI：「${esc(out.query)}」`}</button>`
+      + (out.stale ? `<button class="zhai delentry" type="button">删除词库里「${esc(out.stale)}」这条旧 AI 结果</button>` : "");
     bindSuggest();
+    $("dictResult").querySelector(".delentry")?.addEventListener("click", ()=>{
+      deleteEntry(out.stale);
+      $("dictResult").querySelector(".delentry").remove();
+      $("dictResult").querySelector(".askai").textContent = `都不是，仍然问 AI：「${out.query}」`;
+      out.stale = null;
+      renderLibrary();
+      renderTimeline();
+    });
     $("dictResult").querySelector(".askai").addEventListener("click", async ()=>{
       dictMsg("查询中…");
       const again = await lookup(out.query, { forceAi:true });
