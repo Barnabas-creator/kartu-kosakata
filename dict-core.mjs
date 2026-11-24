@@ -181,7 +181,8 @@ export const DICT_PROMPT = `你是一个专业的印尼语—中文双语词典�
 5. ders 每一项恰好 1 个短语、1 个例句。
 6. 所有内容字段只写内容，不要写「衍生词」「例句」「含义」「短语」这类标签词。
 7. 短语和例句都用 {t, zh} 表示：t 是印尼语原文，zh 是中文翻译。
-8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段填空串和空数组。
+8. 如果输入不是一个印尼语词汇（拼写错误、是别的语言、查无此词），返回 notFound: true 并在 reason 里用中文说明原因，其余字段填空串和空数组。只认 KBBI（Kamus Besar Bahasa Indonesia）收录的词；没把握这个词在 KBBI 里，就当查无此词，绝不能把形近词的意思安到它头上。
+   常见陷阱：meN-/peN- 前缀会吞掉词根开头的 k、p、t、s（menangkap = meN- + tangkap，memukul = meN- + pukul，menyapu = meN- + sapu，mengirim = meN- + kirim）。用户把这类衍生词去掉前缀后得到的「angkap、ukul、apu、irim」不是词，要返回 notFound，并在 reason 里写出正确词根，例如「不是独立词，可能想查 tangkap（menangkap 的词根）」。
 9. notFound 为 false 时，root、ipa、core、rootBlock、ders 每一项都必须有真实内容，不能留空。
 10. pos 是这个原型词的词性，是一个数组，从「名词、动词、形容词、虚词」里选。多数词只有一个词性；确实兼类的词（比如既作形容词又作动词）就都列出来，按主次排序。虚词指介词、连词、助词、感叹词这类不作实义成分的词。
 11. scenes 是这个词最常出现的使用场景，从「高频、工作、教会、生活」里选零到多个：高频指日常最常用的核心词；工作指商务、办公、贸易场合；教会指基督教信仰与教会活动；生活指衣食住行、家庭、身体。判不准就少选，宁缺毋滥。`;
@@ -239,9 +240,17 @@ export function buildRequestBody(word) {
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: RESPONSE_SCHEMA,
-      temperature: 0.2
+      temperature: 0
     }
   };
+}
+
+// meN-/peN- 会吞掉词根首字母 k/p/t/s（menangkap ← tangkap）。
+// 用户把衍生词的前缀剥掉，常剩下元音开头的残片（angkap），这里把可能的真词根列出来。
+export function swallowedRootCandidates(query) {
+  const q = normalizeQuery(query);
+  if (!/^[aeiou][a-z]+$/.test(q)) return [];
+  return ["t", "k", "p", "s"].map(c => c + q);
 }
 
 export function parseGeminiResponse(json) {

@@ -301,3 +301,18 @@ test("entryToCard 的 pos 字段带上全部词性", () => {
   assert.equal(card.pos, "形容词 & 动词");
   assert.deepEqual(card.c, ["形容词","动词","生活"]);
 });
+
+test("swallowedRootCandidates 给元音开头的残片补回被吞的 k/p/t/s", async () => {
+  const { swallowedRootCandidates } = await import("../dict-core.mjs");
+  assert.deepEqual(swallowedRootCandidates("angkap"), ["tangkap", "kangkap", "pangkap", "sangkap"]);
+  assert.deepEqual(swallowedRootCandidates("Ukul "), ["tukul", "kukul", "pukul", "sukul"]);
+  assert.deepEqual(swallowedRootCandidates("tangkap"), []);
+  assert.deepEqual(swallowedRootCandidates("air terjun"), []);
+  assert.deepEqual(swallowedRootCandidates(""), []);
+});
+
+test("提示词点名 meN- 吞音陷阱，温度为 0", () => {
+  assert.match(DICT_PROMPT, /KBBI/);
+  assert.match(DICT_PROMPT, /angkap/);
+  assert.equal(buildRequestBody("x").generationConfig.temperature, 0);
+});
